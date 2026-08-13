@@ -17,7 +17,8 @@ $folders = @(
     "apps\web\src\store",
     "apps\web\src\types",
     "apps\web\src\utils",
-    "apps\web\public"
+    "apps\web\public",
+    '/documentation'
 )
 
 foreach ($folder in $folders) {
