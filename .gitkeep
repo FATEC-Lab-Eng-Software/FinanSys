@@ -1,0 +1,28 @@
+$folders = @(
+    "apps\server\src\core",
+    "apps\server\src\models",
+    "apps\server\src\schemas",
+    "apps\server\src\repositories",
+    "apps\server\src\services",
+    "apps\server\src\routers",
+    "apps\server\alembic",
+    "apps\web\src\app\(auth)\login",
+    "apps\web\src\app\(auth)\register",
+    "apps\web\src\app\(dashboard)\dashboard",
+    "apps\web\src\app\(dashboard)\transactions",
+    "apps\web\src\components\ui",
+    "apps\web\src\components\layout",
+    "apps\web\src\services",
+    "apps\web\src\hooks",
+    "apps\web\src\store",
+    "apps\web\src\types",
+    "apps\web\src\utils",
+    "apps\web\public"
+)
+
+foreach ($folder in $folders) {
+    if (!(Test-Path $folder)) {
+        New-Item -ItemType Directory -Path $folder | Out-Null
+    }
+    New-Item -Path "$folder\.gitkeep" -ItemType File -Force | Out-Null
+}
