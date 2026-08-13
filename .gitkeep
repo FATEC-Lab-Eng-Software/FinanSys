@@ -1,11 +1,20 @@
-$folders = @(
+Get-ChildItem -Recurse -Filter ".gitkeep" | Remove-Item -Force
+
+$serverFolders = @(
     "apps\server\src\core",
     "apps\server\src\models",
     "apps\server\src\schemas",
     "apps\server\src\repositories",
     "apps\server\src\services",
     "apps\server\src\routers",
-    "apps\server\alembic",
+    "apps\server\alembic"
+)
+foreach ($folder in $serverFolders) {
+    if (!(Test-Path $folder)) { New-Item -ItemType Directory -Force -Path $folder | Out-Null }
+    New-Item -Path "$folder\__init__.py" -ItemType File -Force | Out-Null
+}
+
+$webFolders = @(
     "apps\web\src\app\(auth)\login",
     "apps\web\src\app\(auth)\register",
     "apps\web\src\app\(dashboard)\dashboard",
@@ -17,13 +26,9 @@ $folders = @(
     "apps\web\src\store",
     "apps\web\src\types",
     "apps\web\src\utils",
-    "apps\web\public",
-    '/documentation'
+    "apps\web\public"
 )
-
-foreach ($folder in $folders) {
-    if (!(Test-Path $folder)) {
-        New-Item -ItemType Directory -Path $folder | Out-Null
-    }
-    New-Item -Path "$folder\.gitkeep" -ItemType File -Force | Out-Null
+foreach ($folder in $webFolders) {
+    if (!(Test-Path $folder)) { New-Item -ItemType Directory -Force -Path $folder | Out-Null }
+    Set-Content -Path "$folder\README.md" -Value "# Pasta de $(Split-Path $folder -Leaf)"
 }
