@@ -1,0 +1,25 @@
+{
+  "name": "FinanSys",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  "dev:web": "pnpm --filter web dev",
+  "dev:server": "cd apps\\server && .\\venv\\Scripts\\uvicorn.exe main:app --reload --port 8000",
+  "dev": "concurrently -c \"magenta,cyan\" -n \"NEXT,FASTAPI\" \"pnpm run dev:web\" \"pnpm run dev:server\""
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.9.0",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "concurrently": "^10.0.4"
+  }
+}
