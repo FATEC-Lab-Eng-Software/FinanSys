@@ -1,6 +1,7 @@
+name: finansys
+
 services:
   supabase-db:
-    container_name: supabase-db
     image: supabase/postgres:17.6.1.136
     restart: unless-stopped
     ports:
@@ -22,7 +23,6 @@ services:
       - finansys-net
 
   supabase-auth:
-    container_name: supabase-auth
     image: supabase/gotrue:v2.189.0
     restart: unless-stopped
     depends_on:
@@ -78,7 +78,6 @@ services:
       - finansys-net
 
   supabase-rest:
-    container_name: supabase-rest
     image: postgrest/postgrest:v14.12
     restart: unless-stopped
     depends_on:
@@ -96,7 +95,6 @@ services:
       - finansys-net
 
   supabase-storage:
-    container_name: supabase-storage
     image: supabase/storage-api:v1.60.4
     restart: unless-stopped
     depends_on:
@@ -137,7 +135,6 @@ services:
       - finansys-net
 
   supabase-meta:
-    container_name: supabase-meta
     image: supabase/postgres-meta:v0.96.6
     restart: unless-stopped
     depends_on:
@@ -155,7 +152,6 @@ services:
       - finansys-net
 
   supabase-studio:
-    container_name: supabase-studio
     image: supabase/studio:2026.07.07-sha-a6a04f2
     restart: unless-stopped
     ports:
@@ -199,7 +195,6 @@ services:
       - finansys-net
 
   supabase-kong:
-    container_name: supabase-kong
     image: kong/kong:3.9.1
     restart: unless-stopped
     depends_on:
@@ -224,7 +219,6 @@ services:
       - finansys-net
 
   mailpit:
-    container_name: mailpit
     image: axllent/mailpit:v1.21
     restart: unless-stopped
     ports:
@@ -237,7 +231,6 @@ services:
       - finansys-net
 
   templates-server:
-    container_name: templates-server
     image: nginx:1.27-alpine
     restart: unless-stopped
     volumes:
