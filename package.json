@@ -7,7 +7,8 @@
     "supabase:keys": "node scripts/generate-supabase-keys.js",
     "dev:web": "pnpm --filter web dev",
     "dev:server": "cd apps\\server && .\\venv\\Scripts\\uvicorn.exe main:app --reload --port 8000",
-    "dev": "concurrently -c \"magenta,cyan\" -n \"NEXT,FASTAPI\" \"pnpm run dev:web\" \"pnpm run dev:server\""
+    "dev": "concurrently -c \"magenta,cyan\" -n \"NEXT,FASTAPI\" \"pnpm run dev:web\" \"pnpm run dev:server\"",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,9 @@
   },
   "type": "module",
   "devDependencies": {
-    "concurrently": "^10.0.4"
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "concurrently": "^10.0.4",
+    "husky": "^9.1.7"
   }
 }
