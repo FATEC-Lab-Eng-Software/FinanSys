@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "dev:web": "pnpm --filter web dev",
-  "dev:server": "cd apps\\server && .\\venv\\Scripts\\uvicorn.exe main:app --reload --port 8000",
-  "dev": "concurrently -c \"magenta,cyan\" -n \"NEXT,FASTAPI\" \"pnpm run dev:web\" \"pnpm run dev:server\""
-},
+    "supabase:keys": "node scripts/generate-supabase-keys.js",
+    "dev:web": "pnpm --filter web dev",
+    "dev:server": "cd apps\\server && .\\venv\\Scripts\\uvicorn.exe main:app --reload --port 8000",
+    "dev": "concurrently -c \"magenta,cyan\" -n \"NEXT,FASTAPI\" \"pnpm run dev:web\" \"pnpm run dev:server\""
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
