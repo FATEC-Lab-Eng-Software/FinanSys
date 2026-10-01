@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "supabase:keys": "node scripts/generate-supabase-keys.js",
-    "dev:web": "pnpm --filter web dev",
-    "dev:server": "cd apps\\server && .\\venv\\Scripts\\uvicorn.exe main:app --reload --port 8000",
-    "dev": "concurrently -c \"magenta,cyan\" -n \"NEXT,FASTAPI\" \"pnpm run dev:web\" \"pnpm run dev:server\"",
+    "dev:web": "docker compose up --build web",
+    "dev:server": "docker compose up --build server",
+    "dev": "docker compose up --build web server",
     "prepare": "husky"
   },
   "keywords": [],
