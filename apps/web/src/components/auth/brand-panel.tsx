@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 function BrandMark() {
@@ -14,7 +15,7 @@ function BrandMark() {
 export type Benefit = {
   title: string;
   detail: string;
-  icon?: string;
+  icon?: ReactNode;
 };
 
 export type BrandPanelProps = {
