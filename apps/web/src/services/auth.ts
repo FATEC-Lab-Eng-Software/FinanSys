@@ -2,6 +2,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8
 
 export type Credentials = { email: string; password: string };
 
+export type RegisterData = {
+  name: string;
+  email: string;
+  password: string;
+};
+
 async function readMessage(response: Response): Promise<string> {
   try {
     const body = await response.json();
@@ -19,6 +25,23 @@ export async function login(credentials: Credentials): Promise<void> {
     body: JSON.stringify(credentials),
   });
   if (!response.ok) throw new Error("login_failed");
+}
+
+export async function register(data: RegisterData): Promise<{ message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const message = await readMessage(response);
+    if (response.status === 409 || message.toLowerCase().includes("já cadastrado") || message.toLowerCase().includes("already")) {
+      throw new Error("email_already_registered");
+    }
+    throw new Error(message || "register_failed");
+  }
+  return response.json().catch(() => ({ message: "success" }));
 }
 
 export async function requestPasswordRecovery(email: string): Promise<void> {

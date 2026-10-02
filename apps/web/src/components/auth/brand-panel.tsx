@@ -11,13 +11,31 @@ function BrandMark() {
   );
 }
 
-const benefits = [
+export type Benefit = {
+  title: string;
+  detail: string;
+  icon?: string;
+};
+
+export type BrandPanelProps = {
+  title?: string;
+  description?: string;
+  benefits?: Benefit[];
+  copyright?: string;
+};
+
+const defaultBenefits: Benefit[] = [
   { title: "Fluxo mensal em tempo real", detail: "Receitas e despesas sob controle." },
   { title: "Previsibilidade em primeiro lugar", detail: "Saiba o que vem pela frente." },
   { title: "Metas inteligentes", detail: "Saiba exatamente quanto guardar por mês." },
 ];
 
-export function BrandPanel() {
+export function BrandPanel({
+  title = "Clareza total sobre o seu dinheiro.",
+  description = "Centralize contas, acompanhe orçamentos por categoria e conquiste suas metas com um painel construído para decisões rápidas.",
+  benefits = defaultBenefits,
+  copyright = "© 2026 FinanSys. Desenvolvido com foco em você.",
+}: BrandPanelProps = {}) {
   return (
     <aside className="brand-panel" aria-label="Sobre o FinanSys">
       <div className="brand-panel__content">
@@ -27,22 +45,22 @@ export function BrandPanel() {
         </Link>
 
         <div className="brand-panel__message">
-          <h1>Clareza total sobre o seu dinheiro.</h1>
-          <p>
-            Centralize contas, acompanhe orçamentos por categoria e conquiste suas metas com um painel construído para decisões rápidas.
-          </p>
+          <h1>{title}</h1>
+          <p>{description}</p>
         </div>
 
         <ul className="benefit-list">
           {benefits.map((benefit, index) => (
             <li key={benefit.title}>
-              <span className="benefit-list__icon" aria-hidden="true">{index === 0 ? "↗" : index === 1 ? "◷" : "✧"}</span>
+              <span className="benefit-list__icon" aria-hidden="true">
+                {benefit.icon ?? (index === 0 ? "↗" : index === 1 ? "◷" : "✧")}
+              </span>
               <span><strong>{benefit.title}</strong><small>{benefit.detail}</small></span>
             </li>
           ))}
         </ul>
       </div>
-      <small className="brand-panel__copyright">© 2026 FinanSys. Desenvolvido com foco em você.</small>
+      <small className="brand-panel__copyright">{copyright}</small>
     </aside>
   );
 }

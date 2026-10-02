@@ -1,10 +1,16 @@
 import type { ReactNode } from "react";
-import { BrandPanel } from "./brand-panel";
+import { BrandPanel, type BrandPanelProps } from "./brand-panel";
 
-export function AuthShell({ children }: { children: ReactNode }) {
+export function AuthShell({
+  children,
+  brandProps,
+}: {
+  children: ReactNode;
+  brandProps?: BrandPanelProps;
+}) {
   return (
     <main className="auth-layout">
-      <BrandPanel />
+      <BrandPanel {...brandProps} />
       <section className="auth-content">{children}</section>
     </main>
   );
