@@ -1,5 +1,6 @@
 
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -12,14 +13,47 @@ class UserAccessService:
     def __init__(self, session: Session) -> None:
         self._users = UserRepository(session)
 
-    def record_failed_login(self, email: str) -> None:
+    def check_login_lockout(self, email: str) -> datetime | None:
         try:
-            self._users.record_failed_login(email)
+            return self._users.check_login_lockout(email)
         except Exception:
             raise AuthFailure(
                 503,
                 "user_store_unavailable",
                 "Não foi possível concluir a autenticação.",
+                "user_store_unavailable",
+            ) from None
+
+    def record_failed_login(self, email: str) -> datetime | None:
+        try:
+            return self._users.record_failed_login_and_get_lockout(email)
+        except Exception:
+            raise AuthFailure(
+                503,
+                "user_store_unavailable",
+                "Não foi possível concluir a autenticação.",
+                "user_store_unavailable",
+            ) from None
+
+    def check_session_activity(self, user_id: str, now: datetime) -> bool:
+        try:
+            return self._users.check_session_activity(UUID(user_id), now)
+        except Exception:
+            raise AuthFailure(
+                503,
+                "user_store_unavailable",
+                "Serviço de autenticação indisponível.",
+                "user_store_unavailable",
+            ) from None
+
+    def is_session_active(self, user_id: str, now: datetime) -> bool:
+        try:
+            return self._users.is_session_active(UUID(user_id), now)
+        except Exception:
+            raise AuthFailure(
+                503,
+                "user_store_unavailable",
+                "Serviço de autenticação indisponível.",
                 "user_store_unavailable",
             ) from None
 

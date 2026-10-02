@@ -1,0 +1,32 @@
+@baseUrl = http://localhost:8000
+@lockoutTestEmail = pedro@gmail.com
+@lockoutTestPassword = 123456
+@invalidPassword = senha-incorreta-para-teste
+
+### Lockout test: successful baseline login clears prior failed attempts
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{lockoutTestEmail}}",
+  "password": "{{lockoutTestPassword}}"
+}
+
+### Lockout test: failed login 1 of 4 before checking reset
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{lockoutTestEmail}}",
+  "password": "{{invalidPassword}}"
+}
+
+
+### Lockout test: successful login resets the failed-attempt counter
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{lockoutTestEmail}}",
+  "password": "{{lockoutTestPassword}}"
+}

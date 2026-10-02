@@ -25,8 +25,12 @@ async def login(
 
 
 @router.post("/refresh", response_model=LoginResponse)
-def refresh_session(request: Request, response: Response) -> LoginResponse | Response:
-    return process_refresh(request, response)
+def refresh_session(
+    request: Request,
+    response: Response,
+    db: Annotated[Session, Depends(get_db_session)],
+) -> LoginResponse | Response:
+    return process_refresh(request, response, db)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -35,5 +39,8 @@ def logout(request: Request, response: Response) -> Response:
 
 
 @router.get("/me", response_model=AuthenticatedUser)
-def get_me(request: Request) -> AuthenticatedUser | Response:
-    return process_user_lookup(request)
+def get_me(
+    request: Request,
+    db: Annotated[Session, Depends(get_db_session)],
+) -> AuthenticatedUser | Response:
+    return process_user_lookup(request, db)

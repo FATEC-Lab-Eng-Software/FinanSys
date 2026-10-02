@@ -13,8 +13,12 @@ class FakeUserAccessService:
     def __init__(self, db):
         self.db = db
 
+    def check_login_lockout(self, email):
+        return None
+
     def record_failed_login(self, email):
         self.failed_emails.append(email)
+        return None
 
     def record_successful_login(self, user):
         self.successful_users.append(user)

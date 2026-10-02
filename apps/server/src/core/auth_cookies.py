@@ -1,5 +1,3 @@
-
-
 from fastapi.responses import JSONResponse
 from starlette.responses import Response
 
@@ -21,7 +19,7 @@ def _cookie_options() -> dict[str, str | bool]:
 
 def set_session_cookies(response: Response, access: str, refresh: str, expires_in: int) -> None:
     options = _cookie_options()
-    response.set_cookie(ACCESS_COOKIE, access, max_age=expires_in, path="/", **options)
+    response.set_cookie(ACCESS_COOKIE, access, max_age=_REFRESH_MAX_AGE_SECONDS, path="/", **options)
     response.set_cookie(
         REFRESH_COOKIE,
         refresh,
