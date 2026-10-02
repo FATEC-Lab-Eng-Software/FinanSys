@@ -47,7 +47,7 @@ def test_login_sets_http_only_cookies_and_does_not_return_tokens(monkeypatch):
     monkeypatch.setattr("src.services.auth.auth_controller.LoginService", SuccessfulLoginService)
     client = _client(monkeypatch)
     try:
-        response = client.post("/auth/login", json={"email": " DEV@example.com ", "password": "secret"})
+        response = client.post("/auth/login", json={"email": " DEV@example.com ", "password": "password"})
     finally:
         app.dependency_overrides.clear()
 
@@ -92,3 +92,14 @@ def test_login_rejects_invalid_payload_without_exposing_password(monkeypatch):
     assert response.status_code == 422
     assert response.json()["detail"]["code"] == "invalid_request"
     assert "private-password" not in response.text
+
+
+def test_login_rejects_password_shorter_than_eight_characters(monkeypatch):
+    client = _client(monkeypatch)
+    try:
+        response = client.post("/auth/login", json={"email": "dev@example.com", "password": "short!!"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "invalid_request"

@@ -19,24 +19,6 @@ services:
   - name: auth-v1
     url: http://supabase-auth:9999/
     routes:
-      - name: auth-v1-verify
-        paths:
-          - /auth/v1/verify
-        strip_path: true
-        plugins:
-          - name: cors
-      - name: auth-v1-callback
-        paths:
-          - /auth/v1/callback
-        strip_path: true
-        plugins:
-          - name: cors
-      - name: auth-v1-authorize
-        paths:
-          - /auth/v1/authorize
-        strip_path: true
-        plugins:
-          - name: cors
       - name: auth-v1-secure
         paths:
           - /auth/v1/
@@ -52,6 +34,33 @@ services:
               allow:
                 - admin
                 - anon
+  - name: auth-verify
+    url: http://supabase-auth:9999/verify
+    routes:
+      - name: auth-v1-verify
+        paths:
+          - /auth/v1/verify
+        strip_path: true
+        plugins:
+          - name: cors
+  - name: auth-callback
+    url: http://supabase-auth:9999/callback
+    routes:
+      - name: auth-v1-callback
+        paths:
+          - /auth/v1/callback
+        strip_path: true
+        plugins:
+          - name: cors
+  - name: auth-authorize
+    url: http://supabase-auth:9999/authorize
+    routes:
+      - name: auth-v1-authorize
+        paths:
+          - /auth/v1/authorize
+        strip_path: true
+        plugins:
+          - name: cors
   - name: rest-v1
     url: http://supabase-rest:3000/
     routes:
