@@ -1,7 +1,7 @@
 
 
 from datetime import datetime, timedelta
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select, text, update
 from sqlalchemy.dialects.postgresql import insert
@@ -45,12 +45,15 @@ class UserRepository:
     def record_failed_login_and_get_lockout(self, email: str) -> datetime | None:
         result = self._session.execute(
             text(
-                "UPDATE users SET login_attempts = login_attempts + 1, "
-                "lockout_until = CASE WHEN login_attempts + 1 >= 5 "
+                "INSERT INTO users (id, email, role, login_attempts, created_at) "
+                "VALUES (:id, :email, 'client', 1, clock_timestamp()) "
+                "ON CONFLICT (email) DO UPDATE SET "
+                "login_attempts = users.login_attempts + 1, "
+                "lockout_until = CASE WHEN users.login_attempts + 1 >= 5 "
                 "THEN clock_timestamp() + interval '10 minutes' ELSE NULL END "
-                "WHERE email = :email RETURNING login_attempts, lockout_until"
+                "RETURNING login_attempts, lockout_until"
             ),
-            {"email": email.strip().lower()},
+            {"id": uuid4(), "email": email.strip().lower()},
         ).first()
         self._session.commit()
         if result is None or result[0] < 5:
