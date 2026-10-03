@@ -2,7 +2,7 @@
 'use client';
 
 import { usePathname } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, User } from "lucide-react";
 
 type LinkItem = {
     href: string;
@@ -71,7 +71,9 @@ export default function Header() {
                 <button className="flex items-center justify-center border-1 border-gray-200 h-9 w-9 rounded-full bg-primary">
                     <Bell size={16} />
                 </button>
-                <div className="h-9 w-9 rounded-full bg-secondary" />
+                <button className="flex items-center justify-center border-1 border-gray-200 h-9 w-9 rounded-full bg-primary">
+                    <User size={16} />
+                </button>
             </div>
         </header>
     );
