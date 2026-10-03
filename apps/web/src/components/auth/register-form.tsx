@@ -9,7 +9,6 @@ import {
   validateEmail,
   validateName,
   validatePassword,
-  validateTerms,
 } from "../../utils/auth-validation";
 import { PasswordInput } from "./password-input";
 
@@ -18,7 +17,6 @@ type FormErrors = {
   email?: string;
   password?: string;
   confirmPassword?: string;
-  terms?: string;
 };
 
 export function RegisterForm() {
@@ -27,7 +25,6 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -49,7 +46,6 @@ export function RegisterForm() {
       email: validateEmail(email),
       password: validatePassword(password),
       confirmPassword: validateConfirmPassword(password, confirmPassword),
-      terms: validateTerms(acceptedTerms),
     };
 
     setErrors(nextErrors);
@@ -214,39 +210,6 @@ export function RegisterForm() {
         {errors.confirmPassword && (
           <p className="field-error" id="confirmPassword-error">
             {errors.confirmPassword}
-          </p>
-        )}
-      </div>
-
-      {/* Checkbox Termos de Uso e Privacidade */}
-      <div className="form-field">
-        <label className="terms-option">
-          <input
-            id="terms"
-            name="terms"
-            type="checkbox"
-            checked={acceptedTerms}
-            onChange={(event) => {
-              setAcceptedTerms(event.target.checked);
-              setErrors((current) => ({ ...current, terms: undefined }));
-            }}
-            aria-invalid={Boolean(errors.terms)}
-            aria-describedby={errors.terms ? "terms-error" : undefined}
-          />
-          <span>
-            Li e aceito os{" "}
-            <Link href="/termos" target="_blank" rel="noopener noreferrer">
-              Termos de uso
-            </Link>{" "}
-            e{" "}
-            <Link href="/privacidade" target="_blank" rel="noopener noreferrer">
-              Política de privacidade
-            </Link>
-          </span>
-        </label>
-        {errors.terms && (
-          <p className="field-error" id="terms-error">
-            {errors.terms}
           </p>
         )}
       </div>

@@ -23,8 +23,3 @@ export function validateConfirmPassword(password: string, confirmPassword: strin
   if (password !== confirmPassword) return "As senhas não coincidem.";
   return undefined;
 }
-
-export function validateTerms(accepted: boolean): string | undefined {
-  if (!accepted) return "Você precisa aceitar os termos de uso e política de privacidade.";
-  return undefined;
-}

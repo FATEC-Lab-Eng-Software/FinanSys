@@ -11,7 +11,6 @@ test("shows a responsive registration form with Figma elements and link to login
   await expect(page.getByLabel("E-mail")).toBeVisible();
   await expect(page.getByLabel("Senha", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Confirmar senha", { exact: true })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toBeVisible();
   await expect(page.getByRole("button", { name: "Criar conta gratuita" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Entrar" })).toHaveAttribute("href", "/login");
 
@@ -32,7 +31,6 @@ test("validates required fields before submitting with clear error messages", as
   await expect(page.getByText("Informe seu e-mail.")).toBeVisible();
   await expect(page.getByText("Informe sua senha.")).toBeVisible();
   await expect(page.getByText("Confirme sua senha.")).toBeVisible();
-  await expect(page.getByText("Você precisa aceitar os termos de uso e política de privacidade.")).toBeVisible();
 });
 
 test("validates password length and password confirmation match", async ({ page }) => {
@@ -40,7 +38,6 @@ test("validates password length and password confirmation match", async ({ page 
   await page.getByLabel("E-mail").fill("maria@example.com");
   await page.getByLabel("Senha", { exact: true }).fill("curta");
   await page.getByLabel("Confirmar senha", { exact: true }).fill("diferente");
-  await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Criar conta gratuita" }).click();
 
   await expect(page.getByText("A senha deve ter pelo menos 8 caracteres.")).toBeVisible();
@@ -79,7 +76,6 @@ test("shows a clear message when email is already registered", async ({ page }) 
   await page.getByLabel("E-mail").fill("joao@existente.com");
   await page.getByLabel("Senha", { exact: true }).fill("senhaForte123");
   await page.getByLabel("Confirmar senha", { exact: true }).fill("senhaForte123");
-  await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Criar conta gratuita" }).click();
 
   await expect(page.locator(".form-alert")).toHaveText("Este e-mail já está cadastrado. Tente fazer login.");
@@ -99,7 +95,6 @@ test("submits valid registration, shows confirmation and redirects to login", as
   await page.getByLabel("E-mail").fill("novo@finansys.com.br");
   await page.getByLabel("Senha", { exact: true }).fill("senhaSegura123");
   await page.getByLabel("Confirmar senha", { exact: true }).fill("senhaSegura123");
-  await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Criar conta gratuita" }).click();
 
   expect(submittedPayload).toEqual({
