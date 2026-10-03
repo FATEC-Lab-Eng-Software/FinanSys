@@ -23,3 +23,9 @@ Thumbs.db
 
 # Docker volumes locais (se houver persistência na raiz)
 volumes/
+
+# Ambiente virtual Python do backend
+venv/
+env/
+ENV/
+.venv/

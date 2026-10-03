@@ -1,0 +1,12 @@
+{
+  "name": "@finansys/server",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose -f ../../docker-compose.yml up --build server",
+    "db:install": "python -m pip install -r requirements.txt",
+    "db:migration:generate": "alembic revision --autogenerate",
+    "db:migration:apply": "alembic upgrade head",
+    "db:seed": "python -m src.seeds.run",
+    "test": "python -m pytest -q --override-ini=\"python_files=*.test.py\" --import-mode=importlib"
+  }
+}
