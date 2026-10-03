@@ -12,7 +12,7 @@ from src.core.database import SessionLocal, engine
 from src.repositories.auth import UserRepository
 
 PAGE_SIZE = 1000
-SEEDED_PASSWORD = "123456"
+SEEDED_PASSWORD = "123456789"
 SEEDED_PROFILES = (
     {
         "role": "admin",
