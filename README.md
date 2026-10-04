@@ -36,7 +36,7 @@ Muitas pessoas controlam a vida financeira em anotações dispersas ou planilhas
 
 O backlog do produto está versionado neste repositório e usa histórias no formato **Como..., quero..., para...**.
 
-O backlog completo está em [backlog-produto-finansys.md](documentation/backlog-produto-finansys.md) e também em [backlog-produto-finansys.pdf](documentation/backlog-produto-finansys.pdf).
+O backlog completo está em [backlog-produto-finansys.pdf](documentation/backlog-produto-finansys.pdf).
 
 - [Arquitetura e infraestrutura](documentation/infraestructure.md)
 - [Wiki de execução no GitHub](https://github.com/FATEC-Lab-Eng-Software/FinanSys/wiki)
