@@ -44,6 +44,16 @@ test("validates password length and password confirmation match", async ({ page 
   await expect(page.getByText("As senhas não coincidem.")).toBeVisible();
 });
 
+test("validates that full name does not contain numbers", async ({ page }) => {
+  await page.getByLabel("Nome completo").fill("Maria 123");
+  await page.getByLabel("E-mail").fill("maria@example.com");
+  await page.getByLabel("Senha", { exact: true }).fill("senhaForte123");
+  await page.getByLabel("Confirmar senha", { exact: true }).fill("senhaForte123");
+  await page.getByRole("button", { name: "Criar conta gratuita" }).click();
+
+  await expect(page.getByText("O nome não pode conter números.")).toBeVisible();
+});
+
 test("toggles password visibility for both password and confirm password fields", async ({ page }) => {
   const passwordInput = page.getByLabel("Senha", { exact: true });
   const confirmPasswordInput = page.getByLabel("Confirmar senha", { exact: true });

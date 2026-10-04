@@ -15,6 +15,7 @@ export function validateName(name: string): string | undefined {
   const trimmed = name.trim();
   if (!trimmed) return "Informe seu nome completo.";
   if (trimmed.length < 2) return "O nome deve ter pelo menos 2 caracteres.";
+  if (/\d/.test(trimmed)) return "O nome não pode conter números.";
   return undefined;
 }
 
