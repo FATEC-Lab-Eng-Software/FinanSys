@@ -8,7 +8,9 @@
     "dev": "concurrently -k \"pnpm routes:watch\" \"next dev --hostname 0.0.0.0\"",
     "build": "pnpm routes:generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.0",
@@ -18,6 +20,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

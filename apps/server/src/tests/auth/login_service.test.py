@@ -32,7 +32,7 @@ def test_login_service_returns_user_and_session_tokens(monkeypatch):
     monkeypatch.setattr("src.services.auth.login_service.SupabaseAuthAdapter", FakeAuthAdapter)
 
     user, access, refresh, expires_in = LoginService(SimpleNamespace(error=None, result=result)).authenticate(
-        LoginRequest(email=" DEV@example.com ", password="secret")
+        LoginRequest(email=" DEV@example.com ", password="password")
     )
 
     assert user.id == result["user"]["id"]
@@ -50,7 +50,7 @@ def test_login_service_rejects_incomplete_provider_response(monkeypatch):
     )
 
     with pytest.raises(AuthFailure) as raised:
-        LoginService(client).authenticate(LoginRequest(email="dev@example.com", password="secret"))
+        LoginService(client).authenticate(LoginRequest(email="dev@example.com", password="password"))
 
     assert raised.value.status_code == 502
     assert raised.value.audit_outcome == "provider_failure"
@@ -62,7 +62,7 @@ def test_login_service_sanitizes_invalid_credentials(monkeypatch):
     client = SimpleNamespace(error=error, result=None)
 
     with pytest.raises(AuthFailure) as raised:
-        LoginService(client).authenticate(LoginRequest(email="dev@example.com", password="secret"))
+        LoginService(client).authenticate(LoginRequest(email="dev@example.com", password="password"))
 
     assert raised.value.status_code == 401
     assert raised.value.public_message == "E-mail ou senha inválidos."

@@ -9,6 +9,7 @@ from fastapi import HTTPException, Request, Response
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from src.core.config import settings
 from src.core.auth_cookies import (
     ACCESS_COOKIE,
     REFRESH_COOKIE,
@@ -17,11 +18,18 @@ from src.core.auth_cookies import (
     set_session_cookies,
 )
 from src.core.security import verify_browser_origin
-from src.schemas.auth import AuthenticatedUser, LoginRequest, LoginResponse
+from src.schemas.auth import (
+    AuthenticatedUser,
+    LoginRequest,
+    LoginResponse,
+    PasswordRecoveryCompleteRequest,
+    PasswordRecoveryRequest,
+)
 from src.services.auth.errors import AuthFailure
 from src.services.auth.login_service import LoginService, SessionService
 from src.services.auth.user_access_service import UserAccessService
 from src.shared.supabase.client import SupabaseConfigurationError, get_supabase_client
+from src.shared.supabase.auth import SupabaseAuthAdapter, SupabaseAuthError
 
 
 def _public_failure(failure: AuthFailure) -> HTTPException:
@@ -192,3 +200,48 @@ def process_user_lookup(request: Request, db: Session) -> AuthenticatedUser | Re
         raise _public_failure(failure) from None
     except Exception:
         raise _internal_failure() from None
+
+
+def process_password_recovery_request(request: Request, payload: PasswordRecoveryRequest) -> dict[str, str]:
+    verify_browser_origin(request)
+    # Keep responses identical for existing and unknown accounts.
+    try:
+        SupabaseAuthAdapter(get_supabase_client()).request_password_recovery(
+            payload.email, settings.auth_password_recovery_redirect
+        )
+    except SupabaseConfigurationError:
+        raise _unavailable_failure() from None
+    except SupabaseAuthError as error:
+        if error.status == 429:
+            # Preserve privacy while honoring provider throttling.
+            pass
+        elif error.status is not None and error.status >= 500:
+            raise _unavailable_failure() from None
+    except Exception:
+        raise _internal_failure() from None
+    return {"message": "Se houver uma conta associada, enviaremos instruções para redefinir a senha."}
+
+
+def process_password_recovery_complete(
+    request: Request, payload: PasswordRecoveryCompleteRequest
+) -> dict[str, str]:
+    verify_browser_origin(request)
+    try:
+        SupabaseAuthAdapter(get_supabase_client()).update_password(payload.access_token, payload.new_password)
+    except SupabaseConfigurationError:
+        raise _unavailable_failure() from None
+    except SupabaseAuthError as error:
+        if error.status == 401 or error.code in {"invalid_token", "session_not_found", "session_expired"}:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "invalid_recovery_link", "message": "O link de recuperação é inválido ou expirou."},
+            ) from None
+        if error.code == "weak_password":
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "weak_password", "message": "A senha não atende aos requisitos de segurança."},
+            ) from None
+        raise _unavailable_failure() from None
+    except Exception:
+        raise _internal_failure() from None
+    return {"message": "Senha redefinida com sucesso."}

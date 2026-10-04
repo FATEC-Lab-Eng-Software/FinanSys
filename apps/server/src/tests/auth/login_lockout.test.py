@@ -73,7 +73,7 @@ def _client(monkeypatch, state):
     return TestClient(app)
 
 
-def _login(client, password="wrong"):
+def _login(client, password="wrongpass"):
     return client.post("/auth/login", json={"email": "dev@example.com", "password": password})
 
 
@@ -132,7 +132,7 @@ def test_successful_login_resets_attempts_and_lockout(monkeypatch):
     state.result = "success"
     client = _client(monkeypatch, state)
     try:
-        response = _login(client, password="correct")
+        response = _login(client, password="correctpass")
     finally:
         app.dependency_overrides.clear()
 

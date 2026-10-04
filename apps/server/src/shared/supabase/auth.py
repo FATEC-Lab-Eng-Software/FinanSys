@@ -45,6 +45,25 @@ class SupabaseAuthAdapter:
             expect_json=False,
         )
 
+    def request_password_recovery(self, email: str, redirect_to: str) -> None:
+        from urllib.parse import quote
+
+        redirect = quote(redirect_to, safe="")
+        self._request(
+            "POST",
+            f"/auth/v1/recover?redirect_to={redirect}",
+            json={"email": email},
+            expect_json=False,
+        )
+
+    def update_password(self, access_token: str, password: str) -> dict[str, Any]:
+        return self._request(
+            "PUT",
+            "/auth/v1/user",
+            json={"password": password},
+            access_token=access_token,
+        )
+
     def _request(
         self,
         method: str,

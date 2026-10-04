@@ -38,6 +38,10 @@ class Settings:
             "http://localhost:3000,http://127.0.0.1:3000",
         )
         self.auth_trusted_origins = self._origin_list("AUTH_TRUSTED_ORIGINS", "")
+        self.auth_password_recovery_redirect = (
+            os.getenv("AUTH_PASSWORD_RECOVERY_REDIRECT")
+            or "http://localhost:3000/password-recovery"
+        ).strip()
         self.auth_cookie_secure = os.getenv("AUTH_COOKIE_SECURE", "true").strip().lower() in {
             "1",
             "true",
