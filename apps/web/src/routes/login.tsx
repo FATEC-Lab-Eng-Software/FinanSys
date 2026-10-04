@@ -7,6 +7,7 @@ export default function LoginPage() {
     <AuthShell>
       <div className="auth-card">
         <header className="auth-heading">
+          <span className="auth-heading__mark" aria-hidden="true">●</span>
           <h2>Entrar</h2>
           <p>Acesse seu painel de demonstração com as credenciais pré-preenchidas.</p>
         </header>
