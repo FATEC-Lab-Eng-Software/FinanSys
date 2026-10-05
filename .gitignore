@@ -23,3 +23,7 @@ Thumbs.db
 
 # Docker volumes locais (se houver persistência na raiz)
 volumes/
+
+# Artefatos locais de testes e ambiente Python
+test-results/
+venv/

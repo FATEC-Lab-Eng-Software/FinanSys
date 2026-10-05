@@ -1,0 +1,90 @@
+_format_version: "3.0"
+_transform: true
+
+consumers:
+  - username: anon
+    keyauth_credentials:
+      - key: "$SUPABASE_ANON_KEY"
+  - username: service_role
+    keyauth_credentials:
+      - key: "$SUPABASE_SERVICE_KEY"
+
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: service_role
+    group: admin
+
+services:
+  - name: auth-v1
+    url: http://supabase-auth:9999/
+    routes:
+      - name: auth-v1-secure
+        paths:
+          - /auth/v1/
+        strip_path: true
+        plugins:
+          - name: cors
+          - name: key-auth
+            config:
+              hide_credentials: false
+          - name: acl
+            config:
+              hide_groups_header: true
+              allow:
+                - admin
+                - anon
+  - name: auth-verify
+    url: http://supabase-auth:9999/verify
+    routes:
+      - name: auth-v1-verify
+        paths:
+          - /auth/v1/verify
+        strip_path: true
+        plugins:
+          - name: cors
+  - name: auth-callback
+    url: http://supabase-auth:9999/callback
+    routes:
+      - name: auth-v1-callback
+        paths:
+          - /auth/v1/callback
+        strip_path: true
+        plugins:
+          - name: cors
+  - name: auth-authorize
+    url: http://supabase-auth:9999/authorize
+    routes:
+      - name: auth-v1-authorize
+        paths:
+          - /auth/v1/authorize
+        strip_path: true
+        plugins:
+          - name: cors
+  - name: rest-v1
+    url: http://supabase-rest:3000/
+    routes:
+      - name: rest-v1-all
+        paths:
+          - /rest/v1/
+        strip_path: true
+        plugins:
+          - name: cors
+          - name: key-auth
+            config:
+              hide_credentials: false
+          - name: acl
+            config:
+              hide_groups_header: true
+              allow:
+                - admin
+                - anon
+  - name: storage-v1
+    url: http://supabase-storage:5000/
+    routes:
+      - name: storage-v1-all
+        paths:
+          - /storage/v1/
+        strip_path: true
+        plugins:
+          - name: cors
