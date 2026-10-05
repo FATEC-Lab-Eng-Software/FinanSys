@@ -29,6 +29,24 @@ services:
     networks:
       - finansys-net
 
+  supabase-auth-db-init:
+    image: supabase/postgres:17.6.1.136
+    restart: "no"
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        PGPASSWORD="$${POSTGRES_PASSWORD}" psql
+        -h supabase-db -U supabase_admin -d postgres
+        -v ON_ERROR_STOP=1
+        -c "ALTER ROLE supabase_auth_admin WITH LOGIN PASSWORD '$${POSTGRES_PASSWORD}'"
+    networks:
+      - finansys-net
+
   web:
     build:
       context: ./apps/web
@@ -74,6 +92,8 @@ services:
     depends_on:
       supabase-db:
         condition: service_healthy
+      supabase-auth-db-init:
+        condition: service_completed_successfully
       templates-server:
         condition: service_started
     environment:
