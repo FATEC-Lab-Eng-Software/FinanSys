@@ -126,11 +126,3 @@ FinanSys/
 ├── docker-compose.yml  # Ambiente local
 └── package.json        # Scripts do monorepo
 ```
-
-## Equipe
-
-Projeto acadêmico desenvolvido no Laboratório de Engenharia de Software — Hassam, Fatec. A composição da equipe e a distribuição das responsabilidades devem ser registrada na documentação do projeto conforme cada sprint.
-
-## Licença
-
-Projeto acadêmico. Consulte a equipe responsável antes de reutilizar o código ou os artefatos.
