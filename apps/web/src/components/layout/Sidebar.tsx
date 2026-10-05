@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 const links = [
-    { href: "/", label: "Dashboard", icon: House },
+    { href: "/dashboard", label: "Dashboard", icon: House },
     { href: "/gastos", label: "Controle de gastos", icon: CirclePlus },
     { href: "/metas", label: "Metas financeiras", icon: CircleStar },
     { href: "/analises", label: "Gráficos e análises", icon: ChartPie },

@@ -58,17 +58,21 @@ test("shows a generic error when credentials are rejected", async ({ page }) => 
   await expect(page.locator(".form-alert")).toHaveText("Não foi possível entrar. Confira seus dados e tente novamente.");
 });
 
-test("sends credentials and redirects to the home page", async ({ page }) => {
+test("sends credentials and redirects to the dashboard", async ({ page }) => {
   let requestBody: unknown;
   await page.route("**/auth/login", async (route) => {
     requestBody = route.request().postDataJSON();
-    await route.fulfill({ status: 200, json: { user: { id: "user-1", email: "user@example.com" }, expires_in: 3600 } });
+    await route.fulfill({
+      status: 200,
+      headers: { "Set-Cookie": "finansys_access_token=session; Path=/" },
+      json: { user: { id: "user-1", email: "user@example.com" }, expires_in: 3600 },
+    });
   });
   await page.getByLabel("E-mail").fill("user@example.com");
   await page.getByLabel("Senha", { exact: true }).fill("abcdefgh");
   await page.getByRole("button", { name: "Entrar" }).click();
 
-  await expect(page).toHaveURL(/127\.0\.0\.1:3100\/$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
   expect(requestBody).toEqual({ email: "user@example.com", password: "abcdefgh" });
 });
 
@@ -92,4 +96,9 @@ test("validates and submits a recovery password", async ({ page }) => {
   });
   await page.getByRole("button", { name: "Redefinir senha" }).click();
   await expect(page.getByRole("status")).toContainText("Senha atualizada");
+});
+
+test("redirects unauthenticated users from protected routes to login", async ({ page }) => {
+  await page.goto("/metas");
+  await expect(page).toHaveURL(/\/login$/);
 });
