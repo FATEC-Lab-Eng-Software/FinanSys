@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { AuthShell } from "../components/auth/auth-shell";
-import { RegisterForm } from "../components/auth/register-form";
-import type { Benefit } from "../components/auth/brand-panel";
+import { AuthShell } from "../../../components/auth/auth-shell";
+import { RegisterForm } from "../../../components/auth/register-form";
+import type { Benefit } from "../../../components/auth/brand-panel";
 
 function LockBenefitIcon() {
   return (

@@ -3,8 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useSyncExternalStore } from "react";
-import { AuthShell } from "../components/auth/auth-shell";
-import { PasswordRecoveryForm } from "../components/auth/password-recovery-form";
+import { AuthShell } from "../../../components/auth/auth-shell";
+import { PasswordRecoveryForm } from "../../../components/auth/password-recovery-form";
 
 function RecoveryCompletion() {
   const searchParams = useSearchParams();

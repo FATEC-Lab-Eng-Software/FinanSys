@@ -1,5 +1,5 @@
-import { AuthShell } from "../components/auth/auth-shell";
-import { PasswordRecoveryForm } from "../components/auth/password-recovery-form";
+import { AuthShell } from "../../../components/auth/auth-shell";
+import { PasswordRecoveryForm } from "../../../components/auth/password-recovery-form";
 import Link from "next/link";
 
 export default function PasswordRecoveryPage() {

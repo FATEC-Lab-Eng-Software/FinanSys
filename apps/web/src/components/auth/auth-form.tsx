@@ -26,7 +26,7 @@ export function AuthForm() {
     setSubmitting(true);
     try {
       await login({ email: email.trim(), password });
-      router.push("/");
+      router.push("/dashboard");
     } catch {
       setServerError("Não foi possível entrar. Confira seus dados e tente novamente.");
     } finally {
