@@ -6,25 +6,26 @@ Este documento descreve a topologia atualizada da infraestrutura, as ferramentas
 
 ## 🗺️ Visão Geral do Monorepo
 
-O repositório é gerenciado via **pnpm workspaces** (`pnpm-workspace.yaml`), permitindo a orquestração e execução simultânea de múltiplos microsserviços e frontends em um único repositório.
+O repositório é gerenciado via **pnpm workspaces** (`pnpm-workspace.yaml`), permitindo a organização do frontend e da API em um único monorepo.
 
 ```text
 FinanSys/
 ├── apps/                 # Código-fonte das aplicações
 │   ├── server/           # Backend (FastAPI, Python)
 │   └── web/              # Frontend (Next.js, TypeScript)
-├── documentation/        # Documentações gerais do projeto
-├── infraestrutura/       # Orquestração do ambiente Docker (Supabase, Banco de Dados)
+├── documentation/        # Documentação, backlog e artefatos do projeto
+├── docker/               # Configurações auxiliares da infraestrutura
 ├── package.json          # Scripts globais do monorepo
 └── pnpm-workspace.yaml   # Configuração do workspace do pnpm
 ```
 
-## 🐳 Infraestrutura e DevOps (`infraestrutura/`)
+## 🐳 Infraestrutura e DevOps
 
-Todo o ambiente de banco de dados e serviços auxiliares foi isolado nesta pasta para não poluir a raiz do projeto.
+O ambiente de banco de dados e os serviços auxiliares são orquestrados a partir da raiz do projeto e das configurações em `docker/`.
 
 - **`docker-compose.yml`**: Arquivo de orquestração responsável por levantar o ecossistema local (PostgreSQL via Supabase, serviços de Autenticação, Storage, Studio e Mailpit).
 - **`.env.example`**: Variáveis de ambiente padrão necessárias para o funcionamento seguro dos containers Docker.
+- **`documentation/`**: Documentação técnica e backlog versionado do produto.
 
 ## ⚙️ Backend Architecture (`apps/server/`)
 
@@ -64,15 +65,16 @@ O frontend é desenvolvido com **Next.js (App Router)** e **TypeScript**, estrut
 apps/web/
 ├── src/
 │   ├── app/                  # 🛣️ Rotas da Aplicação (App Router)
-│   │   ├── (auth)/           # Grupo de rotas públicas (Login, Register)
-│   │   └── (dashboard)/      # Grupo de rotas protegidas (Painel, Transações)
+│   │   ├── [...slug]/         # Encaminha para as rotas geradas
+│   │   ├── layout.tsx         # Layout raiz e providers
+│   │   └── global.css         # Estilos globais
 │   ├── components/           # 🧩 Componentes Reutilizáveis
 │   │   ├── layout/           # Componentes de estrutura (Sidebars, Headers)
 │   │   └── ui/               # Componentes visuais primários (Botões, Inputs)
 │   ├── hooks/                # 🎣 Funções React customizadas (Custom Hooks)
 │   ├── services/             # 🔌 Clientes e chamadas à API do backend
 │   ├── store/                # 📦 Gerenciamento de estado global
-│   ├── style/                # 💅 Estilizações globais ou tokens CSS
+│   ├── styles/               # 💅 Estilizações globais ou tokens CSS
 │   ├── types/                # 🏷️ Definições de interfaces e tipos globais (TypeScript)
 │   └── utils/                # 🧰 Funções utilitárias puras e formatadores
 ├── public/                   # 🖼️ Arquivos estáticos e mídias
@@ -82,5 +84,5 @@ apps/web/
 
 ### Destaques do Frontend
 
-- **Isolamento Visual** **`(Route Groups)`**: Pastas como `(auth)` não adicionam segmentos à URL, permitindo compartilhar layouts (como uma barra lateral) em várias páginas logadas, sem poluir as telas de login.
+- **Geração de rotas**: o script `scripts/generate-routes.mjs` gera o manifesto usado pela rota catch-all `src/app/[...slug]/page.tsx` a partir dos arquivos em `src/routes`.
 - **Ecossistema Moderno**: Integrado com ferramentas rigorosas de qualidade de código (`eslint.config.mjs`) e processadores de estilo (`postcss.config.mjs`).
