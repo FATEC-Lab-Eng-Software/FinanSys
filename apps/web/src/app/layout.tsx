@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./global.css";
 import { Providers } from "./providers";
-import { AppShell } from "../components/layout/AppShell";
 
 import "../styles/variaveis.css";
 
@@ -15,7 +14,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <html lang="pt-BR">
             <body className="bg-background text-text">
                 <Providers>
-                    <AppShell>{children}</AppShell>
+                    {children}
                 </Providers>
             </body>
         </html>

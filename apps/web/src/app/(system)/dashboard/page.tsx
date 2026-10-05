@@ -1,9 +1,5 @@
-function Dashboard() {
-    return (
-        <main>
-            <></>
-        </main>
-    );
-}
+import { redirect } from "next/navigation";
 
-export default Dashboard;
+export default function Dashboard() {
+    redirect("/gastos");
+}

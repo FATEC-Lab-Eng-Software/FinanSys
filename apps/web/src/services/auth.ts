@@ -24,7 +24,16 @@ export async function login(credentials: Credentials): Promise<void> {
     credentials: "include",
     body: JSON.stringify(credentials),
   });
+  if (response.status === 423) throw new Error("account_locked");
   if (!response.ok) throw new Error("login_failed");
+}
+
+export async function logout(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok && response.status !== 204) throw new Error("logout_failed");
 }
 
 export async function register(data: RegisterData): Promise<{ message?: string }> {

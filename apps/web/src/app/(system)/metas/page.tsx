@@ -62,7 +62,10 @@ export default function Metas() {
     }, []);
 
     useEffect(() => {
-        loadGoals();
+        const run = async () => {
+            await loadGoals();
+        };
+        void run();
     }, [loadGoals]);
 
     useEffect(() => {
@@ -261,7 +264,23 @@ export default function Metas() {
             {loading && <p className="text-sm text-gray-500">Carregando metas...</p>}
             {loadError && <ErrorMessage title="Não foi possível carregar as informações." />}
             {!loading && !loadError && goals.length === 0 && (
-                <p className="text-sm text-gray-500">Nenhuma meta cadastrada.</p>
+                <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
+                    <span className="mb-4 grid h-16 w-16 place-items-center rounded-full bg-blue-50 text-blue-700">
+                        <Medal size={30} strokeWidth={1.8} />
+                    </span>
+                    <h2 className="text-lg font-semibold text-slate-800">Nenhuma meta cadastrada.</h2>
+                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-400">
+                        Organize seus objetivos financeiros e acompanhe seu progresso criando sua primeira meta.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={openCreate}
+                        className="mt-5 inline-flex h-10 items-center gap-2 rounded-full bg-blue-700 px-5 text-sm font-semibold text-white hover:bg-blue-800"
+                    >
+                        <Plus size={16} />
+                        Criar primeira meta
+                    </button>
+                </div>
             )}
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 mt-10">

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
     House,
@@ -11,7 +11,9 @@ import {
     ChartPie,
     PanelLeftClose,
     PanelLeftOpen,
+    LogOut,
 } from "lucide-react";
+import { logout } from "../../services/auth";
 
 const links = [
     { href: "/dashboard", label: "Dashboard", icon: House },
@@ -25,6 +27,7 @@ const MOBILE_QUERY = "(max-width: 767px)";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
 
     const [isOpen, setIsOpen] = useState<boolean | null>(null);
 
@@ -37,6 +40,14 @@ export default function Sidebar() {
 
     const closeOnMobile = () => {
         if (isMobile()) setIsOpen(false);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } finally {
+            router.replace("/login");
+        }
     };
 
     return (
@@ -108,6 +119,15 @@ export default function Sidebar() {
                         );
                     })}
                 </nav>
+                <button
+                    type="button"
+                    onClick={handleLogout}
+                    title={isOpen === false ? "Sair" : undefined}
+                    className="mt-auto flex items-center gap-3 whitespace-nowrap rounded-lg border-l-3 border-transparent px-3 py-2 text-sm text-title transition-colors hover:bg-title/10 hover:text-title"
+                >
+                    <LogOut size={18} className="shrink-0" />
+                    <span className={`transition-opacity duration-300 ${variant("opacity-100", "opacity-0", "opacity-0 md:opacity-100")}`}>Sair</span>
+                </button>
             </aside>
         </div>
     );

@@ -27,7 +27,11 @@ export function AuthForm() {
     try {
       await login({ email: email.trim(), password });
       router.push("/dashboard");
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.message === "account_locked") {
+        console.warn("Conta bloqueada", { email: email.trim() });
+        return;
+      }
       setServerError("Não foi possível entrar. Confira seus dados e tente novamente.");
     } finally {
       setSubmitting(false);
