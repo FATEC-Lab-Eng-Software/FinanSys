@@ -20,7 +20,7 @@ export default function Header() {
 
     const links: LinkItem[] = [
         {
-            href: "/",
+            href: "/dashboard",
             label: "Dashboard",
             description: `Seu resumo financeiro de ${month} de ${year}`
         },

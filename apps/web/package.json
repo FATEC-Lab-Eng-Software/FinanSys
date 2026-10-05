@@ -3,10 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "routes:generate": "node scripts/generate-routes.mjs",
-    "routes:watch": "node scripts/generate-routes.mjs --watch",
-    "dev": "concurrently -k \"pnpm routes:watch\" \"next dev --hostname 0.0.0.0\"",
-    "build": "pnpm routes:generate && next build",
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "playwright test",

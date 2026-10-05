@@ -1,9 +1,5 @@
-@import "tailwindcss";
-
 :root {
   color-scheme: light;
-
-  /* Paleta da tela de login FinanSys */
   --login-navy: #1f347f;
   --login-blue: #283d91;
   --login-blue-light: #4656b2;
@@ -30,18 +26,9 @@ body {
 
 body {
   margin: 0;
-  background: var(--login-background);
+  background: #f5f7fc;
   color: var(--login-text);
   font-family: Arial, Helvetica, sans-serif;
-}
-
-a {
-  color: var(--login-blue);
-  text-decoration: none;
-}
-
-a:hover {
-  color: var(--login-accent);
 }
 
 .auth-layout {
