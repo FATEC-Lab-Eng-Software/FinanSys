@@ -15,11 +15,16 @@ from src.services.auth.auth_controller import (
     process_logout,
     process_password_recovery_complete,
     process_password_recovery_request,
+    process_register,
     process_refresh,
     process_user_lookup,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(request: Request, db: Annotated[Session, Depends(get_db_session)]) -> dict[str, str]:
+    return await process_register(request, db)
 
 
 @router.post("/password-recovery", status_code=status.HTTP_202_ACCEPTED)

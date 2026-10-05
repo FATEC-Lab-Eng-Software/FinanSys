@@ -27,6 +27,13 @@ class SupabaseAuthAdapter:
             json={"email": email, "password": password},
         )
 
+    def register(self, email: str, password: str, name: str) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/auth/v1/signup",
+            json={"email": email, "password": password, "data": {"full_name": name}},
+        )
+
     def refresh(self, refresh_token: str) -> dict[str, Any]:
         return self._request(
             "POST",

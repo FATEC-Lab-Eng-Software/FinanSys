@@ -22,6 +22,7 @@ from src.schemas.auth import (
     AuthenticatedUser,
     LoginRequest,
     LoginResponse,
+    RegisterRequest,
     PasswordRecoveryCompleteRequest,
     PasswordRecoveryRequest,
 )
@@ -70,6 +71,25 @@ def _locked_response(locked_until: datetime) -> HTTPException:
         },
         headers={"Retry-After": str(retry_after)},
     )
+
+async def process_register(request: Request, db: Session) -> dict[str, str]:
+    verify_browser_origin(request)
+    try:
+        payload = RegisterRequest.model_validate(await request.json())
+    except (ValidationError, ValueError, TypeError):
+        raise HTTPException(status_code=422, detail={"code": "invalid_request", "message": "Dados de cadastro inválidos."}) from None
+
+    try:
+        SupabaseAuthAdapter(get_supabase_client()).register(payload.email, payload.password, payload.name)
+    except SupabaseConfigurationError:
+        raise _unavailable_failure() from None
+    except SupabaseAuthError as error:
+        if error.status in {400, 409} or error.code in {"user_already_exists", "email_exists"}:
+            raise HTTPException(status_code=409, detail={"code": "email_already_registered", "message": "Este e-mail já está cadastrado."}) from None
+        raise _public_failure(AuthFailure(502, "registration_failed", "Não foi possível concluir o cadastro.", "provider_failure")) from None
+    except Exception:
+        raise _internal_failure() from None
+    return {"message": "Cadastro realizado com sucesso."}
 
 
 def _access_token_subject(access_token: str) -> str | None:
