@@ -7,7 +7,7 @@
     "supabase:keys": "node scripts/generate-supabase-keys.js",
     "dev:web": "docker compose up --build web",
     "dev:server": "docker compose up --build server",
-    "dev": "docker compose up --build web server",
+    "dev": "docker compose up -d --build web server",
     "prepare": "husky"
   },
   "keywords": [],
