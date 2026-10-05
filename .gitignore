@@ -22,8 +22,17 @@ Thumbs.db
 *.swp
 
 # Docker volumes locais (se houver persistência na raiz)
-volumes/
+volumes/*
+!volumes/auth/
+volumes/auth/*
+!volumes/auth/templates/
+volumes/auth/templates/*
+!volumes/auth/templates/recovery.html
 
-# Artefatos locais de testes e ambiente Python
-test-results/
+# Ambiente virtual Python do backend
 venv/
+env/
+ENV/
+.venv/
+test-results/
+*.tsbuildinfo

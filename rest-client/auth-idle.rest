@@ -1,0 +1,30 @@
+@baseUrl = http://localhost:8000
+@idleTestEmail = admin@finansys.com
+@idleTestPassword = 123456
+
+### Idle test: login for the 15-minute expiry flow
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{idleTestEmail}}",
+  "password": "{{idleTestPassword}}"
+}
+
+### Idle test: authenticated activity renews the idle window
+GET {{baseUrl}}/auth/me
+
+### Idle test: 15-minute idle expiry returns 401 (send after waiting at least 15 minutes without requests)
+GET {{baseUrl}}/auth/me
+
+### Idle test: login for the expired refresh flow
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{idleTestEmail}}",
+  "password": "{{idleTestPassword}}"
+}
+
+### Idle test: expired session cannot refresh after 15 minutes idle (send after waiting at least 15 minutes without requests)
+POST {{baseUrl}}/auth/refresh
