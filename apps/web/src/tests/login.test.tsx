@@ -58,6 +58,20 @@ test("shows a generic error when credentials are rejected", async ({ page }) => 
   await expect(page.locator(".form-alert")).toHaveText("Não foi possível entrar. Confira seus dados e tente novamente.");
 });
 
+test("logs blocked accounts without exposing the blocked state in the form", async ({ page }) => {
+  const logs: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "warning") logs.push(message.text());
+  });
+  await page.route("**/auth/login", (route) => route.fulfill({ status: 423, json: { detail: { message: "Conta bloqueada." } } }));
+  await page.getByLabel("E-mail").fill("blocked@example.com");
+  await page.getByLabel("Senha", { exact: true }).fill("abcdefgh");
+  await page.getByRole("button", { name: "Entrar" }).click();
+
+  await expect(page.locator(".form-alert")).toHaveCount(0);
+  expect(logs.some((message) => message.includes("Conta bloqueada"))).toBe(true);
+});
+
 test("sends credentials and redirects to the dashboard", async ({ page }) => {
   let requestBody: unknown;
   await page.route("**/auth/login", async (route) => {

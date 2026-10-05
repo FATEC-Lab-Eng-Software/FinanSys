@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 config="$(cat /home/kong/kong.template.yml)"

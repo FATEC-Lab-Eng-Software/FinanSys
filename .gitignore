@@ -34,3 +34,5 @@ venv/
 env/
 ENV/
 .venv/
+test-results/
+*.tsbuildinfo

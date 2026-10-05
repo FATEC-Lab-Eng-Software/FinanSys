@@ -59,6 +59,8 @@ services:
       - /app/.next
     ports:
       - "3000:3000"
+    environment:
+      WATCHPACK_POLLING: "true"
     depends_on:
       server:
         condition: service_started

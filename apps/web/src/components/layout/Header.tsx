@@ -67,11 +67,10 @@ export default function Header() {
             </div>
 
             <div className="flex shrink-0 items-center gap-3">
-                <search />
                 <button className="flex items-center justify-center border-1 border-gray-200 h-9 w-9 rounded-full bg-primary">
                     <Bell size={16} />
                 </button>
-                <button className="flex items-center justify-center border-1 border-gray-200 h-9 w-9 rounded-full bg-primary">
+                <button type="button" aria-label="Perfil do usuário" className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-primary">
                     <User size={16} />
                 </button>
             </div>
