@@ -289,7 +289,8 @@ services:
       - ./docker/kong-entrypoint.sh:/docker/kong-entrypoint.sh:ro
     networks:
       - finansys-net
-    entrypoint: ["/bin/bash", "/docker/kong-entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["cp /docker/kong-entrypoint.sh /tmp/kong-entrypoint.sh && sed -i 's/\\r$//' /tmp/kong-entrypoint.sh && exec /tmp/kong-entrypoint.sh"]
 
   mailpit:
     image: axllent/mailpit:v1.21
