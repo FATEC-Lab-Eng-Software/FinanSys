@@ -39,11 +39,17 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - >-
-        PGPASSWORD="$${POSTGRES_PASSWORD}" psql
-        -h supabase-db -U supabase_admin -d postgres
-        -v ON_ERROR_STOP=1
-        -c "ALTER ROLE supabase_auth_admin WITH LOGIN PASSWORD '$${POSTGRES_PASSWORD}'"
+      - |
+        PGPASSWORD="$${POSTGRES_PASSWORD}" psql \
+        -h supabase-db -U supabase_admin -d postgres \
+        -v ON_ERROR_STOP=1 <<'SQL'
+        \getenv role_password POSTGRES_PASSWORD
+        BEGIN;
+        ALTER ROLE supabase_auth_admin WITH LOGIN PASSWORD :'role_password';
+        ALTER ROLE authenticator WITH LOGIN PASSWORD :'role_password';
+        ALTER ROLE supabase_storage_admin WITH LOGIN PASSWORD :'role_password';
+        COMMIT;
+        SQL
     networks:
       - finansys-net
 
@@ -81,7 +87,7 @@ services:
     volumes:
       - supabase-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U postgres -d ${POSTGRES_DB:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -152,6 +158,8 @@ services:
     depends_on:
       supabase-db:
         condition: service_healthy
+      supabase-auth-db-init:
+        condition: service_completed_successfully
     environment:
       PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD:-postgres}@supabase-db:5432/${POSTGRES_DB:-postgres}
       PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS:-public,storage}
@@ -169,6 +177,8 @@ services:
     depends_on:
       supabase-db:
         condition: service_healthy
+      supabase-auth-db-init:
+        condition: service_completed_successfully
       supabase-rest:
         condition: service_started
     environment:
@@ -195,7 +205,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:5000/status",
+          "http://127.0.0.1:5000/status",
         ]
       interval: 5s
       timeout: 5s
