@@ -75,12 +75,12 @@ docker compose up -d --build
 Também existem os scripts:
 
 ```sh
-pnpm dev          # web e server em background
+pnpm dev          # web e server em primeiro plano
 pnpm dev:web      # somente o serviço web
 pnpm dev:server   # somente o serviço server
 ```
 
-`pnpm dev` usa modo desacoplado (`-d`). Os comandos `pnpm dev:web` e `pnpm dev:server` permanecem em primeiro plano. Com a stack iniciada, a documentação interativa da API fica em `http://localhost:8000/docs`. O Compose expõe, por padrão, a aplicação web em `http://localhost:3000`, a API em `http://localhost:8000` e o gateway Supabase/Kong em `http://localhost:8080`.
+`pnpm dev`, `pnpm dev:web` e `pnpm dev:server` mantêm os serviços em primeiro plano. Com a stack iniciada, a documentação interativa da API fica em `http://localhost:8000/docs`. O Compose expõe, por padrão, a aplicação web em `http://localhost:3000`, a API em `http://localhost:8000` e o gateway Supabase/Kong em `http://localhost:8080`.
 
 ## Banco de dados e migrations
 
