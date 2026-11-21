@@ -11,6 +11,7 @@ from src.schemas.transactions_schemas import (
     TransactionResponse,
     TransactionUpdate,
 )
+from src.services.notifications_service import NotificationService
 
 class TransactionFailure(Exception):
     def __init__(self, status_code: int, code: str, message: str) -> None:
@@ -32,6 +33,13 @@ class TransactionService:
             )
         except SQLAlchemyError:
             raise self._store_unavailable() from None
+        transaction_type = "Entrada" if transaction.type == "inflow" else "Saída"
+        NotificationService(self._session).create(
+            user_id,
+            category="transaction",
+            title=f"{transaction_type} registrada",
+            description=f"{transaction.source_money}: R$ {transaction.value:.2f}.",
+        )
         return TransactionResponse.model_validate(transaction)
 
     def list_for_user(self, user_id: str, filters: TransactionFilters) -> list[TransactionResponse]:
