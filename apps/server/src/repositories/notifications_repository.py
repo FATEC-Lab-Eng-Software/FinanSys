@@ -10,7 +10,7 @@ class NotificationRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def create(self, *, user_id: UUID, category: str, title: str, description: str) -> Notification:
+    def add(self, *, user_id: UUID, category: str, title: str, description: str) -> None:
         notification = Notification(
             user_id=user_id,
             category=category,
@@ -18,9 +18,6 @@ class NotificationRepository:
             description=description,
         )
         self._session.add(notification)
-        self._session.commit()
-        self._session.refresh(notification)
-        return notification
 
     def list_for_user(self, user_id: UUID) -> list[Notification]:
         statement = (

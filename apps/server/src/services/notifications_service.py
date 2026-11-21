@@ -20,13 +20,10 @@ class NotificationService:
         self._session = session
         self._notifications = NotificationRepository(session)
 
-    def create(self, user_id: str, *, category: str, title: str, description: str) -> None:
-        try:
-            self._notifications.create(
-                user_id=UUID(user_id), category=category, title=title, description=description
-            )
-        except SQLAlchemyError:
-            self._session.rollback()
+    def stage(self, user_id: str, *, category: str, title: str, description: str) -> None:
+        self._notifications.add(
+            user_id=UUID(user_id), category=category, title=title, description=description
+        )
 
     def list_for_user(self, user_id: str) -> list[NotificationResponse]:
         try:

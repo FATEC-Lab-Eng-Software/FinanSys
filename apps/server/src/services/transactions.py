@@ -27,19 +27,19 @@ class TransactionService:
 
     def create(self, user_id: str, payload: TransactionCreate) -> TransactionResponse:
         try:
+            transaction_type = "Entrada" if payload.type == "inflow" else "Saída"
+            NotificationService(self._session).stage(
+                user_id,
+                category="transaction",
+                title=f"{transaction_type} registrada",
+                description=f"{payload.source_money}: R$ {payload.value:.2f}.",
+            )
             transaction = self._transactions.create(
                 user_id=UUID(user_id),
                 values=payload.model_dump(),
             )
         except SQLAlchemyError:
             raise self._store_unavailable() from None
-        transaction_type = "Entrada" if transaction.type == "inflow" else "Saída"
-        NotificationService(self._session).create(
-            user_id,
-            category="transaction",
-            title=f"{transaction_type} registrada",
-            description=f"{transaction.source_money}: R$ {transaction.value:.2f}.",
-        )
         return TransactionResponse.model_validate(transaction)
 
     def list_for_user(self, user_id: str, filters: TransactionFilters) -> list[TransactionResponse]:
