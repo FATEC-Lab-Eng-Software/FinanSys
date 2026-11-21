@@ -28,11 +28,12 @@ class TransactionService:
     def create(self, user_id: str, payload: TransactionCreate) -> TransactionResponse:
         try:
             transaction_type = "Entrada" if payload.type == "inflow" else "Saída"
+            amount = f"{payload.value:,.2f}".translate(str.maketrans({",": ".", ".": ","}))
             NotificationService(self._session).stage(
                 user_id,
                 category="transaction",
                 title=f"{transaction_type} registrada",
-                description=f"{payload.source_money}: R$ {payload.value:.2f}.",
+                description=f"{payload.source_money}: R$ {amount}.",
             )
             transaction = self._transactions.create(
                 user_id=UUID(user_id),

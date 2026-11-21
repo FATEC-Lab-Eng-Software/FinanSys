@@ -92,7 +92,7 @@ def test_creating_transaction_stages_notification_with_transaction(client: TestC
     assert len(notifications) == 1
     assert notifications[0]["category"] == "transaction"
     assert notifications[0]["title"] == "Entrada registrada"
-    assert notifications[0]["description"] == "Salário: R$ 3200.00."
+    assert notifications[0]["description"] == "Salário: R$ 3.200,00."
 
 
 def test_completing_goal_creates_single_notification(client: TestClient) -> None:
