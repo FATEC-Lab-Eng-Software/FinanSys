@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from src.core.database import SessionLocal, engine
 from src.models.auth import Transaction, User
 
-DEMO_EMAILS = ("pedro@gmail.com", "maria@gmail.com")
+DEMO_EMAILS = ("admin@finansys.com", "pedro@gmail.com", "maria@gmail.com")
 MONTHLY_EXPENSES = (
     ("520.00", "215.00", "170.00", "0.00", "0.00"),
     ("555.00", "230.00", "180.00", "85.00", "0.00"),
