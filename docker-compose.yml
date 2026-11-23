@@ -28,6 +28,8 @@ services:
         condition: service_healthy
       supabase-kong:
         condition: service_started
+      hermes:
+        condition: service_started
     networks:
       - finansys-net
       - hermes-api-net
@@ -35,7 +37,7 @@ services:
   hermes:
     image: nousresearch/hermes-agent:stable
     restart: unless-stopped
-    command: ["gateway", "run"]
+    command: ["sh", "/docker/hermes-start.sh"]
     ports:
       - "127.0.0.1:9119:9119"
     environment:
@@ -51,6 +53,7 @@ services:
       HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${HERMES_DASHBOARD_BASIC_AUTH_SECRET:?Configure HERMES_DASHBOARD_BASIC_AUTH_SECRET no .env}
     volumes:
       - hermes-data:/opt/data
+      - ./docker/hermes-start.sh:/docker/hermes-start.sh:ro
     networks:
       - hermes-api-net
 
