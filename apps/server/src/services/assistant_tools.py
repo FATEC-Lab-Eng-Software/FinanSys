@@ -66,6 +66,23 @@ class FinancialSummaryTool:
             ((category, Decimal(total)) for kind, category, total, _ in grouped if kind == "outflow"),
             key=lambda item: (-item[1], item[0]),
         )
+        month_expression = func.date_trunc("month", Transaction.transaction_date)
+        monthly_grouped = context.session.execute(
+            select(month_expression, func.sum(amount))
+            .where(*criteria, Transaction.type == "outflow")
+            .group_by(month_expression)
+            .order_by(month_expression)
+        ).all()
+        monthly_totals = {month.strftime("%Y-%m"): Decimal(total) for month, total in monthly_grouped}
+        monthly_expenses = []
+        month_cursor = date(start_date.year, start_date.month, 1)
+        while (month_cursor.year, month_cursor.month) <= (end_date.year, end_date.month):
+            month_key = month_cursor.strftime("%Y-%m")
+            monthly_expenses.append({"month": month_key, "total": _money(monthly_totals.get(month_key, Decimal("0")))})
+            if month_cursor.month == 12:
+                month_cursor = date(month_cursor.year + 1, 1, 1)
+            else:
+                month_cursor = date(month_cursor.year, month_cursor.month + 1, 1)
         return {
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat(),
@@ -78,6 +95,7 @@ class FinancialSummaryTool:
                 {"category": category, "total": _money(total)}
                 for category, total in categories
             ],
+            "monthly_expenses": monthly_expenses,
         }
 
 

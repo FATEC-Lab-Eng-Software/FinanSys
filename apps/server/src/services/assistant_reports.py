@@ -44,6 +44,7 @@ _FIELD_LABELS = {
     "balance": "Saldo",
     "transaction_count": "Quantidade de transações",
     "expenses_by_category": "Despesas por categoria",
+    "monthly_expenses": "Gastos por mês",
 }
 _MONEY_FIELDS = {"income_total", "expense_total", "balance"}
 _CATEGORY_LABELS = {
@@ -89,6 +90,8 @@ def _summary_rows(summary: dict[str, object]) -> list[tuple[str, str]]:
             display = "Real brasileiro (BRL)"
         elif key == "expenses_by_category":
             display = _format_categories(value)
+        elif key == "monthly_expenses":
+            display = _format_monthly_expenses(value)
         else:
             display = _display(value)
         rows.append((label, display))
@@ -127,6 +130,38 @@ def _format_categories(value: Any) -> str:
         else:
             formatted.append(_display(item))
     return "\n".join(formatted) if formatted else "Sem despesas por categoria"
+
+
+def _format_monthly_expenses(value: Any) -> str:
+    if not isinstance(value, (list, tuple)):
+        return _display(value)
+    month_names = (
+        "janeiro",
+        "fevereiro",
+        "março",
+        "abril",
+        "maio",
+        "junho",
+        "julho",
+        "agosto",
+        "setembro",
+        "outubro",
+        "novembro",
+        "dezembro",
+    )
+    formatted: list[str] = []
+    for item in value:
+        if not isinstance(item, dict) or not isinstance(item.get("month"), str) or "total" not in item:
+            formatted.append(_display(item))
+            continue
+        try:
+            month = date.fromisoformat(f"{item['month']}-01")
+        except ValueError:
+            formatted.append(_display(item))
+            continue
+        month_label = f"{month_names[month.month - 1].capitalize()} de {month.year}"
+        formatted.append(f"{month_label}: {_format_brl(item['total'])}")
+    return "\n".join(formatted) if formatted else "Sem gastos no período"
 
 
 def _render_email() -> tuple[str, str]:
