@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, LoaderCircle, Send } from "lucide-react";
+import { Bot, Download, LoaderCircle, Send } from "lucide-react";
 
 import Card from "../../../components/ui/Card";
 import { AssistantApiError, sendAssistantMessage } from "../../../services/assistant";
@@ -14,6 +14,24 @@ const INTRO_MESSAGE: AssistantMessage = {
     role: "assistant",
     content: "Oi! Como posso te ajudar hoje?",
 };
+
+function downloadArtifact(filename: string, contentType: string, contentBase64: string) {
+    const binary = window.atob(contentBase64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+    }
+
+    const blob = new Blob([bytes.buffer], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 function Assistente() {
     const router = useRouter();
@@ -40,7 +58,11 @@ function Assistente() {
 
         try {
             const response = await sendAssistantMessage(nextMessages);
-            const assistantMessage: AssistantMessage = { role: "assistant", content: response.message };
+            const assistantMessage: AssistantMessage = {
+                role: "assistant",
+                content: response.message,
+                artifacts: response.artifacts,
+            };
             setMessages((current) => [...current, assistantMessage].slice(-MAX_MESSAGES));
         } catch (requestError) {
             if (requestError instanceof AssistantApiError && requestError.status === 401) {
@@ -73,6 +95,22 @@ function Assistente() {
                         <div key={`${index}-${message.role}`} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                             <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 md:max-w-[75%] ${message.role === "user" ? "rounded-br-md bg-secondary text-white" : "rounded-bl-md bg-slate-100 text-slate-800"}`}>
                                 <p className="whitespace-pre-wrap">{message.content}</p>
+                                {message.artifacts && message.artifacts.length > 0 && (
+                                    <ul className="mt-3 space-y-2" aria-label="Arquivos gerados pelo assistente">
+                                        {message.artifacts.map((artifact, artifactIndex) => (
+                                            <li key={`${artifact.filename}-${artifactIndex}`}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => downloadArtifact(artifact.filename, artifact.content_type, artifact.content_base64)}
+                                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                                                >
+                                                    <Download size={16} aria-hidden="true" />
+                                                    <span>Baixar {artifact.filename}</span>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         </div>
                     ))}

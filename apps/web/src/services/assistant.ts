@@ -32,7 +32,7 @@ export async function sendAssistantMessage(messages: AssistantMessage[]): Promis
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({ messages: messages.map(({ role, content }) => ({ role, content })) }),
     });
     if (!response.ok) throw await readError(response);
     return response.json() as Promise<AssistantChatResponse>;

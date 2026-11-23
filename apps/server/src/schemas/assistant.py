@@ -28,5 +28,12 @@ class AssistantChatRequest(BaseModel):
         return self
 
 
+class AssistantArtifact(BaseModel):
+    filename: str = Field(min_length=1, max_length=120)
+    content_type: str = Field(min_length=1, max_length=120)
+    content_base64: str = Field(min_length=1)
+
+
 class AssistantChatResponse(BaseModel):
     message: str
+    artifacts: list[AssistantArtifact] = Field(default_factory=list)
