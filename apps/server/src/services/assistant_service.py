@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 import httpx2
@@ -5,12 +6,7 @@ import httpx2
 from src.core.config import settings
 from src.schemas.assistant import AssistantMessage
 
-SYSTEM_MESSAGE = (
-    "Você é o assistente do FinanSys. Converse em português brasileiro, com clareza e objetividade. "
-    "Nesta versão você não tem acesso a ferramentas, dados financeiros, arquivos ou email. "
-    "Não afirme que consultou dados, criou relatórios ou realizou ações. "
-    "Quando pedirem algo que dependa desses recursos, explique essa limitação com brevidade."
-)
+SYSTEM_PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "assistant-system.md"
 
 
 class AssistantFailure(Exception):
@@ -30,7 +26,22 @@ class AssistantService:
                 "O assistente ainda não está configurado.",
             )
 
-        request_messages = [{"role": "system", "content": SYSTEM_MESSAGE}]
+        try:
+            system_message = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
+        except OSError:
+            raise AssistantFailure(
+                503,
+                "assistant_prompt_unavailable",
+                "O prompt do assistente não está disponível.",
+            ) from None
+        if not system_message:
+            raise AssistantFailure(
+                503,
+                "assistant_prompt_unavailable",
+                "O prompt do assistente não está disponível.",
+            )
+
+        request_messages = [{"role": "system", "content": system_message}]
         request_messages.extend(message.model_dump() for message in messages)
 
         try:

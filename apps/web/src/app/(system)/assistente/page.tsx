@@ -12,7 +12,7 @@ import type { AssistantMessage } from "../../../types/assistant";
 const MAX_MESSAGES = 20;
 const INTRO_MESSAGE: AssistantMessage = {
     role: "assistant",
-    content: "Olá! Posso conversar com você por aqui. Nesta primeira versão ainda não consulto seus dados financeiros nem executo tarefas no FinanSys.",
+    content: "Oi! Como posso te ajudar hoje?",
 };
 
 function Assistente() {
@@ -40,7 +40,8 @@ function Assistente() {
 
         try {
             const response = await sendAssistantMessage(nextMessages);
-            setMessages((current) => [...current, { role: "assistant", content: response.message }].slice(-MAX_MESSAGES));
+            const assistantMessage: AssistantMessage = { role: "assistant", content: response.message };
+            setMessages((current) => [...current, assistantMessage].slice(-MAX_MESSAGES));
         } catch (requestError) {
             if (requestError instanceof AssistantApiError && requestError.status === 401) {
                 router.replace("/login");
