@@ -1,5 +1,3 @@
-"""Read-only, user-scoped tools available to the financial assistant."""
-
 from __future__ import annotations
 
 import logging
@@ -84,8 +82,6 @@ class FinancialSummaryTool:
 
 
 class ToolDecorator:
-    """Structural GoF decorator that forwards a tool's public interface."""
-
     def __init__(self, wrapped: AssistantTool) -> None:
         self._wrapped = wrapped
 
@@ -126,7 +122,6 @@ class AuditToolDecorator(ToolDecorator):
 
 
 def build_financial_summary_tool() -> AssistantTool:
-    """Return the financial summary wrapped with scope validation and audit."""
     return AuditToolDecorator(AuthenticatedUserScopeDecorator(FinancialSummaryTool()))
 
 

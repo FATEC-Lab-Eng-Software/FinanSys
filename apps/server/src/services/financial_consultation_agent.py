@@ -1,5 +1,3 @@
-"""Financial consultation specialist backed by the scoped summary tool."""
-
 from pathlib import Path
 from typing import Protocol
 

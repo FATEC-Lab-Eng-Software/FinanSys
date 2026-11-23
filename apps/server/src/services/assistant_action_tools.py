@@ -1,5 +1,3 @@
-"""Report and email actions that consume an already-produced summary."""
-
 from __future__ import annotations
 
 from typing import Any
