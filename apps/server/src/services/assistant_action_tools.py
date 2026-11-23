@@ -49,7 +49,7 @@ class _SendReportEmailTool:
         if not isinstance(recipient, str):
             raise ValueError("Destinatário de email inválido.")
         artifacts: list[ReportArtifact] = generate_financial_report(summary)
-        send_financial_report_email(recipient, summary, artifacts)
+        send_financial_report_email(recipient, artifacts)
         return {
             "summary": summary,
             "_artifacts": artifacts,

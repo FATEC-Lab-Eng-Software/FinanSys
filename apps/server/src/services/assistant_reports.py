@@ -9,7 +9,6 @@ from email.message import EmailMessage
 from html import escape
 from io import BytesIO
 from pathlib import Path
-from string import Template
 from typing import Any
 
 from docx import Document
@@ -130,42 +129,10 @@ def _format_categories(value: Any) -> str:
     return "\n".join(formatted) if formatted else "Sem despesas por categoria"
 
 
-def _email_template_values(summary: dict[str, object]) -> dict[str, str]:
-    period = f"{_format_date(summary.get('start_date'))} a {_format_date(summary.get('end_date'))}"
-    categories = summary.get("expenses_by_category")
-    category_items = categories if isinstance(categories, (list, tuple)) else []
-    category_rows = "".join(
-        '<tr><td style="padding:12px 0;border-bottom:1px solid #e8edf5;color:#334155;font-size:14px">'
-        f"{escape(_category_label(item.get('category')))}</td>"
-        '<td align="right" style="padding:12px 0;border-bottom:1px solid #e8edf5;color:#0f172a;font-size:14px;font-weight:700">'
-        f"{escape(_format_brl(item.get('total')))}</td></tr>"
-        for item in category_items
-        if isinstance(item, dict) and "category" in item and "total" in item
-    )
-    return {
-        "period": escape(period),
-        "income_total": escape(_format_brl(summary.get("income_total"))),
-        "expense_total": escape(_format_brl(summary.get("expense_total"))),
-        "balance": escape(_format_brl(summary.get("balance"))),
-        "transaction_count": escape(_display(summary.get("transaction_count", 0))),
-        "category_rows": category_rows or (
-            '<tr><td colspan="2" style="padding:14px 0;color:#64748b;font-size:14px">'
-            "Sem despesas registradas neste período.</td></tr>"
-        ),
-        "category_text": _format_categories(categories),
-    }
-
-
-def _category_label(value: Any) -> str:
-    label = str(value)
-    return _CATEGORY_LABELS.get(label.strip().lower(), label.replace("_", " ").capitalize())
-
-
-def _render_email(summary: dict[str, object]) -> tuple[str, str]:
-    values = _email_template_values(summary)
+def _render_email() -> tuple[str, str]:
     html_template = (_EMAIL_TEMPLATE_DIRECTORY / "financial-report.html").read_text(encoding="utf-8")
     text_template = (_EMAIL_TEMPLATE_DIRECTORY / "financial-report.txt").read_text(encoding="utf-8")
-    return Template(text_template).substitute(values), Template(html_template).substitute(values)
+    return text_template, html_template
 
 
 def _make_docx(rows: list[tuple[str, str]]) -> bytes:
@@ -226,7 +193,6 @@ def generate_financial_report(summary: dict[str, object]) -> list[ReportArtifact
 
 def send_financial_report_email(
     recipient: str,
-    summary: dict[str, object],
     artifacts: list[ReportArtifact],
 ) -> None:
     if not isinstance(recipient, str) or len(recipient) > 254 or not _EMAIL_RE.fullmatch(recipient):
@@ -243,7 +209,7 @@ def send_financial_report_email(
     message["Subject"] = "Seu relatório financeiro está pronto"
     message["From"] = "assistente@finansys.local"
     message["To"] = recipient
-    text_body, html_body = _render_email(summary)
+    text_body, html_body = _render_email()
     message.set_content(text_body)
     message.add_alternative(html_body, subtype="html")
     for artifact in pdf_artifacts:
