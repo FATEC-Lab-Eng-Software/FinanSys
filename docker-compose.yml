@@ -21,6 +21,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       SUPABASE_URL: http://supabase-kong:8000
+      HERMES_API_BASE_URL: http://hermes:8642/v1
+      HERMES_API_SERVER_KEY: ${HERMES_API_SERVER_KEY:?Configure HERMES_API_SERVER_KEY no .env}
     depends_on:
       supabase-db:
         condition: service_healthy
@@ -28,6 +30,29 @@ services:
         condition: service_started
     networks:
       - finansys-net
+      - hermes-api-net
+
+  hermes:
+    image: nousresearch/hermes-agent:stable
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    ports:
+      - "127.0.0.1:9119:9119"
+    environment:
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: 0.0.0.0
+      API_SERVER_PORT: 8642
+      API_SERVER_KEY: ${HERMES_API_SERVER_KEY:?Configure HERMES_API_SERVER_KEY no .env}
+      HERMES_DASHBOARD: "1"
+      HERMES_DASHBOARD_HOST: 0.0.0.0
+      HERMES_DASHBOARD_PORT: 9119
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${HERMES_DASHBOARD_BASIC_AUTH_USERNAME:?Configure HERMES_DASHBOARD_BASIC_AUTH_USERNAME no .env}
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD:?Configure HERMES_DASHBOARD_BASIC_AUTH_PASSWORD no .env}
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${HERMES_DASHBOARD_BASIC_AUTH_SECRET:?Configure HERMES_DASHBOARD_BASIC_AUTH_SECRET no .env}
+    volumes:
+      - hermes-data:/opt/data
+    networks:
+      - hermes-api-net
 
   supabase-auth-db-init:
     image: supabase/postgres:17.6.1.136
@@ -195,7 +220,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:5000/status",
+          "http://127.0.0.1:5000/status",
         ]
       interval: 5s
       timeout: 5s
@@ -312,8 +337,10 @@ services:
       - finansys-net
 
 volumes:
+  hermes-data:
   supabase-db-data:
   supabase-storage-data:
 
 networks:
   finansys-net:
+  hermes-api-net:
