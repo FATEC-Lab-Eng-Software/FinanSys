@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Bot, Download, LoaderCircle, Send } from "lucide-react";
 
 import Card from "../../../components/ui/Card";
+import BookRecommendations from "../../../components/assistant/BookRecommendations";
 import { AssistantApiError, sendAssistantMessage } from "../../../services/assistant";
 import type { AssistantMessage } from "../../../types/assistant";
 
@@ -62,6 +63,7 @@ function Assistente() {
                 role: "assistant",
                 content: response.message,
                 artifacts: response.artifacts,
+                books: response.books,
             };
             setMessages((current) => [...current, assistantMessage].slice(-MAX_MESSAGES));
         } catch (requestError) {
@@ -84,7 +86,6 @@ function Assistente() {
                     </span>
                     <div>
                         <h1 className="text-2xl font-bold text-text">Assistente FinanSys</h1>
-                        <p className="text-sm text-text/60">Conectado ao agente Hermes</p>
                     </div>
                 </div>
             </header>
@@ -95,6 +96,7 @@ function Assistente() {
                         <div key={`${index}-${message.role}`} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                             <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 md:max-w-[75%] ${message.role === "user" ? "rounded-br-md bg-secondary text-white" : "rounded-bl-md bg-slate-100 text-slate-800"}`}>
                                 <p className="whitespace-pre-wrap">{message.content}</p>
+                                {message.books && <BookRecommendations books={message.books} />}
                                 {message.artifacts && message.artifacts.length > 0 && (
                                     <ul className="mt-3 space-y-2" aria-label="Arquivos gerados pelo assistente">
                                         {message.artifacts.map((artifact, artifactIndex) => (

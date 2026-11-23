@@ -9,12 +9,13 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 
-from src.schemas.assistant import AssistantArtifact, AssistantChatResponse, AssistantMessage
+from src.schemas.assistant import AssistantArtifact, AssistantBook, AssistantChatResponse, AssistantMessage
 from src.services.assistant_action_tools import build_assistant_action_tools
 from src.services.assistant_errors import AssistantFailure
 from src.services.assistant_hermes_client import HermesClient
 from src.services.assistant_planner import OrchestratorAgent
 from src.services.assistant_tools import AssistantToolContext
+from src.services.book_recommendation_agent import BookRecommendationAgent
 from src.services.financial_consultation_agent import FinancialConsultationAgent
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class AssistantCoordinator:
         self._hermes = hermes or HermesClient()
         self._orchestrator_agent = OrchestratorAgent(self._hermes)
         self._consultant = FinancialConsultationAgent(session, user_id, self._hermes)
+        self._book_recommendations = BookRecommendationAgent()
         self._actions = build_assistant_action_tools()
 
     def chat(self, messages: list[AssistantMessage]) -> AssistantChatResponse:
@@ -35,6 +37,20 @@ class AssistantCoordinator:
             return AssistantChatResponse(message=plan.message or "")
         if plan.action == "email" and not plan.recipient:
             return AssistantChatResponse(message="Qual endereço de email devo usar para enviar o relatório demonstrativo?")
+        if plan.agent == "curador_livros":
+            try:
+                result = self._book_recommendations.recommend(self._context, plan.query or "")
+            except AssistantFailure:
+                raise
+            except ValueError:
+                raise AssistantFailure(422, "assistant_book_query_invalid", "Não consegui identificar o tema para buscar livros.") from None
+            except Exception:
+                logger.warning("assistant_book_search_failed")
+                raise AssistantFailure(503, "assistant_book_search_unavailable", "Não foi possível buscar livros agora.") from None
+            return AssistantChatResponse(
+                message=result["message"],
+                books=[AssistantBook.model_validate(book) for book in result["books"]],
+            )
 
         start_date, end_date = self._resolve_period(plan.start_date, plan.end_date)
         try:
@@ -59,7 +75,7 @@ class AssistantCoordinator:
         message = str(consultation["answer"])
         period = f"{date.fromisoformat(start_date):%d/%m/%Y} a {date.fromisoformat(end_date):%d/%m/%Y}"
         if plan.action == "relatorio":
-            message += f"\n\nGerei o relatório financeiro do período {period} em Word e PDF."
+            message += f"\n\nGerei o relatório financeiro do período {period} em PDF."
         else:
             message += f"\n\nRegistrei o envio demonstrativo do relatório do período {period} para {plan.recipient} no Mailpit local."
         return AssistantChatResponse(message=message, artifacts=artifacts)

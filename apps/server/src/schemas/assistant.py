@@ -34,6 +34,15 @@ class AssistantArtifact(BaseModel):
     content_base64: str = Field(min_length=1)
 
 
+class AssistantBook(BaseModel):
+    title: str = Field(min_length=1, max_length=240)
+    authors: list[str] = Field(default_factory=list, max_length=5)
+    description: str = Field(default="", max_length=700)
+    published_date: str | None = Field(default=None, max_length=32)
+    info_link: str = Field(min_length=1, max_length=500)
+
+
 class AssistantChatResponse(BaseModel):
     message: str
     artifacts: list[AssistantArtifact] = Field(default_factory=list)
+    books: list[AssistantBook] = Field(default_factory=list, max_length=10)

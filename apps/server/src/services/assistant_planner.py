@@ -15,20 +15,34 @@ class AssistantPlan(BaseModel):
 
     kind: Literal["final", "delegate"]
     message: str | None = None
-    agent: Literal["consultor_financeiro"] | None = None
-    action: Literal["consulta", "relatorio", "email"] | None = None
+    agent: Literal["consultor_financeiro", "curador_livros"] | None = None
+    action: Literal["consulta", "relatorio", "email", "buscar_livros"] | None = None
     start_date: str | None = None
     end_date: str | None = None
     recipient: str | None = None
+    query: str | None = None
 
     @model_validator(mode="after")
     def validate_plan(self) -> "AssistantPlan":
         if self.kind == "final":
-            if not self.message or not self.message.strip() or any((self.agent, self.action, self.start_date, self.end_date, self.recipient)):
+            if not self.message or not self.message.strip() or any((self.agent, self.action, self.start_date, self.end_date, self.recipient, self.query)):
                 raise ValueError("Resposta final inválida")
             self.message = self.message.strip()
             return self
-        if self.agent != "consultor_financeiro" or self.action is None or self.message is not None:
+        if self.message is not None:
+            raise ValueError("Delegação inválida")
+        if self.agent == "curador_livros":
+            if (
+                self.action != "buscar_livros"
+                or not self.query
+                or not self.query.strip()
+                or len(self.query) > 180
+                or any((self.start_date, self.end_date, self.recipient))
+            ):
+                raise ValueError("Busca de livros inválida")
+            self.query = self.query.strip()
+            return self
+        if self.agent != "consultor_financeiro" or self.action not in {"consulta", "relatorio", "email"} or self.query is not None:
             raise ValueError("Delegação inválida")
         if (self.start_date is None) != (self.end_date is None):
             raise ValueError("O período precisa estar completo")

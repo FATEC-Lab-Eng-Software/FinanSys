@@ -11,7 +11,6 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-from docx import Document
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4
@@ -32,7 +31,6 @@ class ReportArtifact:
 _MAILPIT_HOST = "mailpit"
 _MAILPIT_PORT = 1025
 _EMAIL_RE = re.compile(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$")
-_DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 _PDF_TYPE = "application/pdf"
 _EMAIL_TEMPLATE_DIRECTORY = Path(__file__).resolve().parents[2] / "templates" / "emails"
 _FIELD_LABELS = {
@@ -170,18 +168,6 @@ def _render_email() -> tuple[str, str]:
     return text_template, html_template
 
 
-def _make_docx(rows: list[tuple[str, str]]) -> bytes:
-    document = Document()
-    document.add_heading("Relatório financeiro", level=0)
-    document.add_paragraph("Resumo financeiro fornecido pelo assistente.")
-    for label, value in rows:
-        document.add_heading(label, level=2)
-        document.add_paragraph(value)
-    output = BytesIO()
-    document.save(output)
-    return output.getvalue()
-
-
 def _make_pdf(rows: list[tuple[str, str]]) -> bytes:
     output = BytesIO()
     styles = getSampleStyleSheet()
@@ -220,10 +206,7 @@ def _make_pdf(rows: list[tuple[str, str]]) -> bytes:
 
 def generate_financial_report(summary: dict[str, object]) -> list[ReportArtifact]:
     rows = _summary_rows(summary)
-    return [
-        ReportArtifact("relatorio-financeiro.docx", _DOCX_TYPE, _make_docx(rows)),
-        ReportArtifact("relatorio-financeiro.pdf", _PDF_TYPE, _make_pdf(rows)),
-    ]
+    return [ReportArtifact("relatorio-financeiro.pdf", _PDF_TYPE, _make_pdf(rows))]
 
 
 def send_financial_report_email(
