@@ -62,7 +62,7 @@ Aplicar alterações com `alembic upgrade head` a partir de `apps/server`. A mig
 - `pedro@gmail.com` (`client`, Pedro Cliente);
 - `maria@gmail.com` (`client`, Maria Cliente).
 
-O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `role`, `first_name` e `last_name` nos metadados do Auth. Ele não cria transações: não há seed de registros em `transactions` no código inspecionado. Para executar, é necessário configurar `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`; a sincronização também depende da conexão do banco.
+O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `role`, `first_name` e `last_name` nos metadados do Auth. Após sincronizar as contas, `src.seeds.transactions.seed` cria transações sintéticas dos últimos seis meses para Pedro e Maria, desde que cada conta ainda não tenha transações. O seed é idempotente e preserva lançamentos já existentes. Para executar, é necessário configurar `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`; a sincronização e as transações também dependem da conexão do banco.
 
 ## Fontes do código
 
@@ -71,5 +71,7 @@ O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `rol
 - `apps/server/src/schemas/transactions_schemas.py`
 - `apps/server/src/repositories/auth/user_repository.py`
 - `apps/server/src/repositories/transactions_repository.py`
+- `apps/server/src/repositories/analytics_repository.py`
+- `apps/server/src/seeds/transactions/seed.py`
 - `apps/server/alembic/versions/`
 - `apps/server/src/seeds/auth/seed.py`

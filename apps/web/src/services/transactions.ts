@@ -1,4 +1,5 @@
 import type { Transaction, TransactionCreate, TransactionFilters, TransactionUpdate } from "../types/transactions";
+import type { AnalyticsPeriod, FinancialAnalytics } from "../types/analytics";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -52,6 +53,10 @@ function toQueryString(filters: TransactionFilters): string {
 
 export function listTransactions(filters: TransactionFilters = {}): Promise<Transaction[]> {
     return request<Transaction[]>(`/transactions${toQueryString(filters)}`);
+}
+
+export function getFinancialAnalytics(period: AnalyticsPeriod): Promise<FinancialAnalytics> {
+    return request<FinancialAnalytics>(`/analytics${toQueryString(period)}`);
 }
 
 export function getTransaction(transactionId: number): Promise<Transaction> {
