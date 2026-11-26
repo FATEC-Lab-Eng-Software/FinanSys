@@ -16,7 +16,7 @@ config:
     nodeSpacing: 180
     rankSpacing: 160
     fontSize: 16
-  themeCSS: '#diagram .edgeLabel p { font-size: 20px !important; }'
+  themeCSS: '.edgeLabel p { font-size: 20px !important; }'
   themeVariables:
     background: '#ffffff'
     primaryColor: '#ffffff'
