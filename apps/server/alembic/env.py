@@ -7,6 +7,7 @@ from src.core.config import settings
 from src.models.base import Base
 
 from src.models.auth import user
+from src.models import notification
 
 config = context.config
 

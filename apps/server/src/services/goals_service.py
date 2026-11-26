@@ -13,6 +13,7 @@ from src.schemas.goals_schemas import (
     GoalResponse,
     GoalUpdate,
 )
+from src.services.notifications_service import NotificationService
 
 CENTS = Decimal("0.01")
 
@@ -34,6 +35,8 @@ class GoalService:
         values = payload.model_dump()
         values["status"] = self._resolve_status(values["target_value"], values["accumulated_value"])
         try:
+            if values["status"] == GoalStatus.DONE.value:
+                self._stage_goal_completed(user_id, values["name"])
             goal = self._goals.create(user_id=UUID(user_id), values=values)
         except SQLAlchemyError:
             raise self._store_unavailable() from None
@@ -52,11 +55,14 @@ class GoalService:
     def update(self, user_id: str, goal_id: int, payload: GoalUpdate) -> GoalResponse:
         goal = self._find(user_id, goal_id)
         values = payload.model_dump(exclude_unset=True)
+        was_done = goal.status == GoalStatus.DONE.value
         values["status"] = self._resolve_status(
             values.get("target_value", goal.target_value),
             values.get("accumulated_value", goal.accumulated_value),
         )
         try:
+            if not was_done and values["status"] == GoalStatus.DONE.value:
+                self._stage_goal_completed(user_id, values.get("name", goal.name))
             goal = self._goals.update(goal, values=values)
         except SQLAlchemyError:
             raise self._store_unavailable() from None
@@ -95,6 +101,14 @@ class GoalService:
         if accumulated_value >= target_value:
             return GoalStatus.DONE.value
         return GoalStatus.PENDING.value
+
+    def _stage_goal_completed(self, user_id: str, goal_name: str) -> None:
+        NotificationService(self._session).stage(
+            user_id,
+            category="goal",
+            title="Meta concluída",
+            description=f"Parabéns! Você concluiu a meta {goal_name}.",
+        )
 
     def _store_unavailable(self) -> GoalFailure:
         self._session.rollback()

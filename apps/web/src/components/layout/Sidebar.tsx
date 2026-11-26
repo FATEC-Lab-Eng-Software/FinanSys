@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
     House,
     CirclePlus,
@@ -14,6 +15,7 @@ import {
     LogOut,
 } from "lucide-react";
 import { logout } from "../../services/auth";
+import { useAuthSession } from "../../app/providers";
 
 const links = [
     { href: "/dashboard", label: "Dashboard", icon: House },
@@ -28,6 +30,8 @@ const MOBILE_QUERY = "(max-width: 767px)";
 export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
+    const queryClient = useQueryClient();
+    const { setUserId } = useAuthSession();
 
     const [isOpen, setIsOpen] = useState<boolean | null>(null);
 
@@ -43,6 +47,8 @@ export default function Sidebar() {
     };
 
     const handleLogout = async () => {
+        queryClient.clear();
+        setUserId(null);
         try {
             await logout();
         } finally {
