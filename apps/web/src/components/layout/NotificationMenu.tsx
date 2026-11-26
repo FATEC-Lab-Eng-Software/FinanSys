@@ -6,8 +6,9 @@ import { Bell, BellRing, CircleAlert, Goal, Inbox, LoaderCircle, Trash2, X } fro
 
 import { deleteAllNotifications, deleteNotification, listNotifications } from "../../services/notifications";
 import type { Notification } from "../../types/notifications";
+import { useAuthSession } from "../../app/providers";
 
-const NOTIFICATIONS_QUERY_KEY = ["notifications"];
+const NOTIFICATIONS_QUERY_KEY = ["notifications"] as const;
 const notificationDate = new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
@@ -17,10 +18,12 @@ export default function NotificationMenu() {
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
+    const { userId } = useAuthSession();
+    const notificationsQueryKey = [...NOTIFICATIONS_QUERY_KEY, userId];
     const notificationsQuery = useQuery({
-        queryKey: NOTIFICATIONS_QUERY_KEY,
-        queryFn: listNotifications,
-        enabled: open,
+        queryKey: notificationsQueryKey,
+        queryFn: () => listNotifications(userId!),
+        enabled: open && userId !== null,
         staleTime: 60_000,
         refetchInterval: open ? 60_000 : false,
         refetchIntervalInBackground: false,
@@ -30,13 +33,13 @@ export default function NotificationMenu() {
     const deleteOneMutation = useMutation({
         mutationFn: deleteNotification,
         onSuccess: (_, notificationId) => queryClient.setQueryData<Notification[]>(
-            NOTIFICATIONS_QUERY_KEY,
+            notificationsQueryKey,
             (current) => current?.filter((notification) => notification.id !== notificationId),
         ),
     });
     const deleteAllMutation = useMutation({
         mutationFn: deleteAllNotifications,
-        onSuccess: () => queryClient.setQueryData(NOTIFICATIONS_QUERY_KEY, []),
+        onSuccess: () => queryClient.setQueryData(notificationsQueryKey, []),
     });
 
     const notifications = notificationsQuery.data ?? [];

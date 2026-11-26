@@ -2,8 +2,8 @@ import type { Notification } from "../types/notifications";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const MIN_NOTIFICATION_REQUEST_INTERVAL = 60_000;
-let lastListRequestAt = 0;
-let listRequest: Promise<Notification[]> | undefined;
+const lastListRequestAt = new Map<string, number>();
+const listRequests = new Map<string, Promise<Notification[]>>();
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -19,16 +19,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return (await response.json()) as T;
 }
 
-export function listNotifications(): Promise<Notification[]> {
-    if (listRequest) return listRequest;
-    if (Date.now() - lastListRequestAt < MIN_NOTIFICATION_REQUEST_INTERVAL) {
+export function listNotifications(userId: string): Promise<Notification[]> {
+    const activeRequest = listRequests.get(userId);
+    if (activeRequest) return activeRequest;
+    const previousRequestAt = lastListRequestAt.get(userId) ?? 0;
+    if (Date.now() - previousRequestAt < MIN_NOTIFICATION_REQUEST_INTERVAL) {
         return Promise.reject(new Error("Aguarde um minuto antes de consultar novamente."));
     }
 
-    lastListRequestAt = Date.now();
-    listRequest = request<Notification[]>("/notifications").finally(() => {
-        listRequest = undefined;
+    lastListRequestAt.set(userId, Date.now());
+    const listRequest = request<Notification[]>("/notifications").finally(() => {
+        listRequests.delete(userId);
     });
+    listRequests.set(userId, listRequest);
     return listRequest;
 }
 
