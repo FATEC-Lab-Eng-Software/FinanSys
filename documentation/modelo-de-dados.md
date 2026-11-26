@@ -94,5 +94,7 @@ O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `rol
 - `apps/server/src/schemas/transactions_schemas.py`
 - `apps/server/src/repositories/auth/user_repository.py`
 - `apps/server/src/repositories/transactions_repository.py`
+- `apps/server/src/repositories/analytics_repository.py`
+- `apps/server/src/seeds/transactions/seed.py`
 - `apps/server/alembic/versions/`
 - `apps/server/src/seeds/auth/seed.py`

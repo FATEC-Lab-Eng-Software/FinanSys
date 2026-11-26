@@ -60,19 +60,17 @@ export default function CadastroPage() {
         copyright: "© 2026 FinanSys. Desenvolvido com foco em você.",
       }}
     >
-      <div className="auth-card">
-        <header className="auth-heading">
-          <h2>Criar conta</h2>
-          <p>Preencha os dados abaixo para começar.</p>
+      <div className="mx-auto w-full max-w-[440px] [@media(max-width:620px)]:max-w-[460px]">
+        <header className="relative mb-8 [@media(max-width:620px)]:mb-[25px]">
+          <h2 className="m-0 text-[30px] font-bold tracking-[-.04em] text-login-text">Criar conta</h2>
+          <p className="mt-[9px] max-w-[400px] text-[13px] leading-[1.6] text-login-text-muted">Preencha os dados abaixo para começar.</p>
         </header>
 
         <RegisterForm />
 
-        <div className="auth-divider">
-          <span>ou</span>
-        </div>
+        <div className="my-[27px] mb-[19px] flex items-center gap-[14px] text-[11px] text-login-divider before:h-px before:flex-1 before:bg-login-border before:content-[''] after:h-px after:flex-1 after:bg-login-border after:content-['']"><span>ou</span></div>
 
-        <p className="auth-footer">
+        <p className="m-0 text-center text-[11px] text-login-text-muted [&_a]:font-semibold">
           Já tem uma conta? <Link href="/login">Entrar</Link>
         </p>
       </div>
