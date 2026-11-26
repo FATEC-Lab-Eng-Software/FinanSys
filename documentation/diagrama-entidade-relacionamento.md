@@ -5,18 +5,29 @@ Este diagrama representa as tabelas de domínio presentes nos models SQLAlchemy 
 ```mermaid
 ---
 config:
+  layout: dagre
   theme: base
+  er:
+    theme: neutral
+    look: classic
+    layoutDirection: TB
+    diagramPadding: 32
+    entityPadding: 18
+    nodeSpacing: 180
+    rankSpacing: 160
+    fontSize: 16
   themeVariables:
     background: '#ffffff'
     primaryColor: '#ffffff'
     primaryTextColor: '#000000'
     primaryBorderColor: '#000000'
-    lineColor: '#000000'
+    lineColor: '#808080'
     textColor: '#000000'
     secondaryColor: '#ffffff'
     secondaryTextColor: '#000000'
     tertiaryColor: '#ffffff'
     tertiaryTextColor: '#000000'
+    edgeLabelBackground: '#ffffff'
 ---
 erDiagram
     users ||--o{ transactions : possui
