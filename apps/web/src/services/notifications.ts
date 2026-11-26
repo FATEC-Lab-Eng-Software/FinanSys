@@ -1,7 +1,7 @@
 import type { Notification } from "../types/notifications";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-const MIN_NOTIFICATION_REQUEST_INTERVAL = 60_000;
+const MIN_NOTIFICATION_REQUEST_INTERVAL = 600_000;
 const lastListRequestAt = new Map<string, number>();
 const listRequests = new Map<string, Promise<Notification[]>>();
 
@@ -24,7 +24,7 @@ export function listNotifications(userId: string): Promise<Notification[]> {
     if (activeRequest) return activeRequest;
     const previousRequestAt = lastListRequestAt.get(userId) ?? 0;
     if (Date.now() - previousRequestAt < MIN_NOTIFICATION_REQUEST_INTERVAL) {
-        return Promise.reject(new Error("Aguarde um minuto antes de consultar novamente."));
+        return Promise.reject(new Error("Aguarde 10 minutos antes de consultar novamente."));
     }
 
     lastListRequestAt.set(userId, Date.now());

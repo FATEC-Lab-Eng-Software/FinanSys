@@ -24,8 +24,8 @@ export default function NotificationMenu() {
         queryKey: notificationsQueryKey,
         queryFn: () => listNotifications(userId!),
         enabled: open && userId !== null,
-        staleTime: 60_000,
-        refetchInterval: open ? 60_000 : false,
+        staleTime: 600_000,
+        refetchInterval: open ? 600_000 : false,
         refetchIntervalInBackground: false,
         retry: false,
     });
@@ -91,7 +91,7 @@ export default function NotificationMenu() {
                     <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-4">
                         <div className="min-w-0">
                             <h2 id="notification-panel-title" className="font-semibold text-slate-900">Notificações</h2>
-                            <p className="mt-0.5 text-xs text-slate-500">Atualização automática a cada minuto</p>
+                            <p className="mt-0.5 text-xs text-slate-500">Atualização automática a cada 10 minutos</p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
                             <button
@@ -124,7 +124,7 @@ export default function NotificationMenu() {
                             <div className="flex flex-col items-center px-5 py-8 text-center" role="alert">
                                 <CircleAlert size={22} className="text-red-500" />
                                 <p className="mt-2 text-sm font-medium text-slate-700">Não foi possível carregar as notificações.</p>
-                                <p className="mt-2 text-xs text-slate-500">A próxima consulta será feita em até um minuto.</p>
+                                <p className="mt-2 text-xs text-slate-500">A próxima consulta será feita em até 10 minutos.</p>
                             </div>
                         )}
                         {notificationsQuery.isSuccess && notifications.length === 0 && (
