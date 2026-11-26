@@ -2,6 +2,8 @@
 
 Documento de referência para DEV sobre os modelos persistidos pelo backend.
 
+O [diagrama entidade-relacionamento em Mermaid](diagrama-entidade-relacionamento.md) mostra as mesmas tabelas e relacionamentos visualmente.
+
 ## Entidades
 
 ### `users`
@@ -30,10 +32,27 @@ Modelo SQLAlchemy: `src.models.transaction.Transaction`.
 | `id` | `integer` | Sim | Chave primária. |
 | `user_id` | UUID PostgreSQL | Sim | FK para `users.id`, com `ON DELETE CASCADE`. |
 | `type` | `varchar(20)` | Sim | Enum `TransactionType`: `inflow` ou `outflow`; também validado por `ck_transactions_type_valid`. |
-| `category` | `varchar(50)` | Sim | O schema Pydantic aceita apenas `work`, `housing`, `utilities`, `food`, `transportation`, `medical`, `pets`, `travel` e `other`. O modelo/migration do banco não possui constraint SQL para essa lista e aceita qualquer texto de até 50 caracteres quando gravado diretamente. |
+| `category` | `varchar(50)` | Sim | O schema Pydantic valida `work`, `housing`, `utilities`, `food`, `transportation`, `medical`, `pets`, `travel` e `other`. O banco armazena o campo como texto de até 50 caracteres; gravações diretas devem aplicar a mesma validação do schema. |
 | `transaction_date` | `date` | Sim | Data informada para a transação. |
 | `value` | `numeric(12,2)` | Sim | Maior que zero (`ck_transactions_value_positive`); schemas limitam a precisão/escala. |
 | `source_money` | `varchar(100)` | Sim | Texto não vazio após trim nos schemas de criação/atualização. |
+| `created_at` | `timestamptz` | Sim | Default de servidor `now()`. |
+| `updated_at` | `timestamptz` | Sim | Default `now()` e atualização via `onupdate=func.now()` no ORM. |
+
+### `goals`
+
+Modelo SQLAlchemy: `src.models.goal.Goal`.
+
+| Campo | Tipo | Obrigatório | Regras e observações |
+|---|---|---:|---|
+| `id` | `integer` | Sim | Chave primária. |
+| `user_id` | UUID PostgreSQL | Sim | FK para `users.id`, com `ON DELETE CASCADE`. |
+| `name` | `varchar(100)` | Sim | O schema remove espaços nas extremidades e rejeita valor vazio. |
+| `category` | `varchar(50)` | Sim | O schema aceita as categorias definidas em `GoalCategory`. |
+| `target_date` | `date` | Não | Prazo opcional. |
+| `target_value` | `numeric(12,2)` | Sim | Maior que zero (`ck_goals_target_value_positive`). |
+| `accumulated_value` | `numeric(12,2)` | Sim | Default `0`; não pode ser negativo (`ck_goals_accumulated_value_nonnegative`). |
+| `status` | `varchar(20)` | Sim | Default `pending`; valores `pending` ou `done` (`ck_goals_status_valid`). O serviço calcula o valor a partir do acumulado e da meta. |
 | `created_at` | `timestamptz` | Sim | Default de servidor `now()`. |
 | `updated_at` | `timestamptz` | Sim | Default `now()` e atualização via `onupdate=func.now()` no ORM. |
 
@@ -43,6 +62,8 @@ Modelo SQLAlchemy: `src.models.transaction.Transaction`.
 
 Há um índice composto `ix_transactions_user_id_transaction_date` para acelerar o acesso por usuário e data. Os filtros de período, tipo e categoria são aplicados adicionalmente; a listagem ordena por data decrescente e, em empate, por `id` decrescente.
 
+`GoalRepository` também restringe as operações ao `user_id` autenticado. A FK `goals.user_id` usa `ON DELETE CASCADE`; o índice `ix_goals_user_id` acelera a listagem de metas por usuário.
+
 ## Migrations Alembic
 
 A cadeia atual é:
@@ -51,8 +72,9 @@ A cadeia atual é:
 2. `9c81f05e2a7b_users_from_auth_attempts`: consolida usuários a partir de `auth_login_attempts` quando essa tabela existe e remove as tabelas legadas `auth_login_attempts` e `financial_categories`.
 3. `4b8e91d263fa_auth_session_controls`: adiciona `lockout_until` e `last_activity_at`, copiando `last_access_at` para a nova coluna quando aplicável.
 4. `48f554e1dfff_create_transactions_table`: cria `transactions`, suas constraints, FK com cascade e índice por usuário/data.
+5. `df023ce708c3`: cria `goals`, suas constraints, FK com cascade e índice por usuário.
 
-Aplicar alterações com `alembic upgrade head` a partir de `apps/server`. A migration de transações depende da existência de `users`; não criar `transactions` manualmente antes de executar a cadeia.
+Aplicar alterações com `alembic upgrade head` a partir de `apps/server`. As migrations de transações e metas dependem da existência de `users`; não criar essas tabelas manualmente antes de executar a cadeia.
 
 ## Seed e sincronização
 
@@ -62,12 +84,13 @@ Aplicar alterações com `alembic upgrade head` a partir de `apps/server`. A mig
 - `pedro@gmail.com` (`client`, Pedro Cliente);
 - `maria@gmail.com` (`client`, Maria Cliente).
 
-O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `role`, `first_name` e `last_name` nos metadados do Auth. Ele não cria transações: não há seed de registros em `transactions` no código inspecionado. Para executar, é necessário configurar `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`; a sincronização também depende da conexão do banco.
+O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `role`, `first_name` e `last_name` nos metadados do Auth. Ele prepara perfis de usuário; transações de demonstração podem ser criadas separadamente. Para executar, configure `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` e disponibilize a conexão com o banco.
 
 ## Fontes do código
 
 - `apps/server/src/models/auth/user.py`
 - `apps/server/src/models/transaction.py`
+- `apps/server/src/models/goal.py`
 - `apps/server/src/schemas/transactions_schemas.py`
 - `apps/server/src/repositories/auth/user_repository.py`
 - `apps/server/src/repositories/transactions_repository.py`

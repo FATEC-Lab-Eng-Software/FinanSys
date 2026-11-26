@@ -121,7 +121,7 @@ pnpm --dir apps/web test
 pnpm --dir apps/server test
 ```
 
-O frontend também possui `test:ui`, `build` e geração de rotas. O backend executa pytest com o padrão de arquivos `*.test.py`. Não há script global de lint/teste nem workflow de CI versionado em `.github`.
+O frontend também possui `test:ui`, `build` e geração de rotas. O backend executa pytest com o padrão de arquivos `*.test.py`. Os comandos de lint e teste ficam distribuídos por workspace; a pasta `.github` não contém workflow de CI versionado.
 
 ### Recomendação
 

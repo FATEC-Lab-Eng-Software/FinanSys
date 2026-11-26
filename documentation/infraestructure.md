@@ -1,88 +1,43 @@
-# 🏗️ Arquitetura e Infraestrutura do FinanSys
+# Infraestrutura e organização do FinanSys
 
-Este documento descreve a topologia atualizada da infraestrutura, as ferramentas utilizadas e a arquitetura de pastas do monorepo **FinanSys**. O projeto utiliza uma abordagem modular e altamente escalável.
+Este guia resume a topologia local do monorepo. A descrição detalhada de camadas, fluxos e integrações está em [arquitetura.md](arquitetura.md); o passo a passo de configuração fica no [README da raiz](../README.md) e na [wiki de execução](https://github.com/FATEC-Lab-Eng-Software/FinanSys/wiki).
 
----
+## Monorepo
 
-## 🗺️ Visão Geral do Monorepo
+O workspace pnpm contém duas aplicações:
 
-O repositório é gerenciado via **pnpm workspaces** (`pnpm-workspace.yaml`), permitindo a organização do frontend e da API em um único monorepo.
+- `apps/web`: Next.js 16, React 19 e TypeScript;
+- `apps/server`: FastAPI, Pydantic, SQLAlchemy e Alembic.
 
-```text
-FinanSys/
-├── apps/                 # Código-fonte das aplicações
-│   ├── server/           # Backend (FastAPI, Python)
-│   └── web/              # Frontend (Next.js, TypeScript)
-├── documentation/        # Documentação, backlog e artefatos do projeto
-├── docker/               # Configurações auxiliares da infraestrutura
-├── package.json          # Scripts globais do monorepo
-└── pnpm-workspace.yaml   # Configuração do workspace do pnpm
-```
+O diretório `documentation/` reúne guias técnicos, contrato da API, modelo de dados, testes e backlog. O arquivo `docker-compose.yml` da raiz orquestra o ambiente local.
 
-## 🐳 Infraestrutura e DevOps
-
-O ambiente de banco de dados e os serviços auxiliares são orquestrados a partir da raiz do projeto e das configurações em `docker/`.
-
-- **`docker-compose.yml`**: Arquivo de orquestração responsável por levantar o ecossistema local (PostgreSQL via Supabase, serviços de Autenticação, Storage, Studio e Mailpit).
-- **`.env.example`**: Variáveis de ambiente padrão necessárias para o funcionamento seguro dos containers Docker.
-- **`documentation/`**: Documentação técnica e backlog versionado do produto.
-
-## ⚙️ Backend Architecture (`apps/server/`)
-
-O backend foi construído em **Python com FastAPI** e adota uma arquitetura limpa dividida em camadas lógicas. Essa estrutura garante que regras de negócio, validações HTTP e acesso ao banco de dados não se misturem.
-
-### Árvore de Diretórios
+## Topologia local
 
 ```text
-apps/server/
-├── src/
-│   ├── core/             # ⚙️ Configurações (ex: database.py, config.py)
-│   ├── models/           # 🗄️ Entidades do Banco de Dados (ORM)
-│   ├── schemas/          # 🛡️ Contratos de API (Pydantic) 
-│   ├── repositories/     # 🔍 Consultas e Persistência no Banco 
-│   ├── services/         # 💼 Regras de Negócio e Lógica 
-│   └── routers/          # 🌐 Endpoints e Controladores HTTP 
-├── main.py               # 🚀 Arquivo principal que inicializa o servidor FastAPI
-├── requirements.txt      # 📦 Dependências do Python
-└── .env.example          # 🔑 Variáveis de ambiente do servidor
+Navegador
+  └── Next.js (localhost:3000)
+       └── FastAPI (localhost:8000)
+            ├── SQLAlchemy/psycopg → PostgreSQL (supabase-db:5432)
+            ├── HTTP/JSON → Hermes (hermes:8642)
+            └── HTTP → Kong (localhost:8080) → serviços Supabase
 ```
 
-### O Fluxo de uma Requisição (Camada por Camada)
+O Compose também define os serviços auxiliares do Supabase, o Studio, o Mailpit para e-mails locais e Hermes para o assistente financeiro. O PostgreSQL mantém os dados no volume `supabase-db-data`.
 
-1. **Routers**: Recebem a requisição HTTP (ex: `POST /users`), injetam as dependências e repassam os dados.
-2. **Schemas**: O Pydantic valida automaticamente o corpo da requisição e garante o formato correto dos dados de entrada e saída.
-3. **Services**: Executam a inteligência da aplicação. Verificam se o e-mail já existe, fazem o hash da senha e preparam os dados.
-4. **Repositories**: Isolam a linguagem SQL/SQLAlchemy. Recebem o comando do serviço para salvar no banco.
-5. **Models**: Representam a estrutura física da tabela no PostgreSQL.
+## Inicialização
 
-## 🎨 Frontend Architecture (`apps/web/`)
+Configure as variáveis copiando `.env.example` para `.env` e gere as chaves locais do Supabase conforme o [README](../README.md). Inicie o ambiente na raiz:
 
-O frontend é desenvolvido com **Next.js (App Router)** e **TypeScript**, estruturado para componentização, separação de layouts e integração otimizada com a API.
-
-### Árvore de Diretórios
-
-```text
-apps/web/
-├── src/
-│   ├── app/                  # 🛣️ Rotas da Aplicação (App Router)
-│   │   ├── [...slug]/         # Encaminha para as rotas geradas
-│   │   ├── layout.tsx         # Layout raiz e providers
-│   │   └── global.css         # Estilos globais
-│   ├── components/           # 🧩 Componentes Reutilizáveis
-│   │   ├── layout/           # Componentes de estrutura (Sidebars, Headers)
-│   │   └── ui/               # Componentes visuais primários (Botões, Inputs)
-│   ├── hooks/                # 🎣 Funções React customizadas (Custom Hooks)
-│   ├── services/             # 🔌 Clientes e chamadas à API do backend
-│   ├── store/                # 📦 Gerenciamento de estado global
-│   ├── styles/               # 💅 Estilizações globais ou tokens CSS
-│   ├── types/                # 🏷️ Definições de interfaces e tipos globais (TypeScript)
-│   └── utils/                # 🧰 Funções utilitárias puras e formatadores
-├── public/                   # 🖼️ Arquivos estáticos e mídias
-├── next.config.ts            # ⚙️ Configurações do compilador Next.js
-└── package.json              # 📦 Dependências do frontend
+```sh
+docker compose up -d --build
 ```
 
-### Destaques do Frontend
+Para desenvolvimento sem subir toda a stack, use `pnpm dev:web` ou `pnpm dev:server`. A documentação interativa da API fica em `http://localhost:8000/docs`. Migrations e seed são executados separadamente; veja [modelo-de-dados.md](modelo-de-dados.md) e a wiki de execução.
 
-- **Geração de rotas**: o script `scripts/generate-routes.mjs` gera o manifesto usado pela rota catch-all `src/app/[...slug]/page.tsx` a partir dos arquivos em `src/routes`.
-- **Ecossistema Moderno**: Integrado com ferramentas rigorosas de qualidade de código (`eslint.config.mjs`) e processadores de estilo (`postcss.config.mjs`).
+## Referências técnicas
+
+- [Arquitetura e fluxos](arquitetura.md)
+- [Contrato da API](api.md)
+- [Modelo de dados](modelo-de-dados.md)
+- [Estratégia de testes](testes.md)
+- [Guia de contribuição](contribuicao.md)
