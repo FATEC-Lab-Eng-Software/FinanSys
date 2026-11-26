@@ -19,6 +19,8 @@ Navegador
 Next.js (web:3000) -----> FastAPI (server:8000)
                               |\
                               | \-- SQLAlchemy/psycopg --> PostgreSQL (supabase-db:5432)
+                              |\
+                              | \-- HTTP/JSON --> Hermes (hermes:8642)
                               |
                               \---- HTTP/JSON --> Kong (supabase-kong:8000)
                                                    |--> GoTrue / Supabase Auth
@@ -28,9 +30,9 @@ Next.js (web:3000) -----> FastAPI (server:8000)
 
 ## Frontend Next.js
 
-O frontend fica em `apps/web` e usa o App Router do Next.js. A entrada da aplicação está em `src/app/layout.tsx` e `src/app/page.tsx`; a rota catch-all `src/app/[...slug]/page.tsx` integra as rotas de tela geradas a partir de `src/routes` pelo script `scripts/generate-routes.mjs`.
+O frontend fica em `apps/web` e usa o App Router do Next.js. A entrada da aplicação está em `src/app/layout.tsx` e `src/app/page.tsx`. As páginas estão organizadas nos grupos `src/app/(auth)` e `src/app/(system)`; os grupos organizam layout e proteção sem fazer parte das URLs.
 
-As páginas e fluxos de autenticação estão em `src/routes` e são compostos por componentes em `src/components`. O `src/app/providers.tsx` configura o `QueryClientProvider` do TanStack Query. Estilos globais ficam em `src/app/global.css` e `src/styles/variaveis.css`.
+As páginas e fluxos estão em `src/app` e são compostos por componentes em `src/components`. O `src/app/providers.tsx` configura os providers da aplicação. Estilos globais ficam em `src/app/global.css` e `src/styles/variaveis.css`.
 
 As chamadas de autenticação estão centralizadas em `src/services/auth.ts`. A URL da API é obtida de `NEXT_PUBLIC_API_BASE_URL`, com fallback para `http://localhost:8000`. As requisições enviam `credentials: "include"`, permitindo que o navegador envie e receba os cookies de sessão entre frontend e backend quando a política de CORS e os atributos dos cookies estão configurados corretamente.
 
@@ -39,8 +41,8 @@ As chamadas de autenticação estão centralizadas em `src/services/auth.ts`. A 
 O ponto de entrada é `apps/server/main.py`. Ele:
 
 1. cria a aplicação FastAPI;
-2. configura CORS com origens permitidas, credenciais, métodos `GET`, `POST` e `OPTIONS`, e os cabeçalhos usados pela aplicação. Apesar de o router expor `PATCH` e `DELETE` para o CRUD de transações, esses métodos ainda não estão liberados no CORS; chamadas cross-origin do navegador para atualização/exclusão podem falhar no preflight;
-3. registra os routers de autenticação e transações;
+2. configura CORS com origens permitidas, credenciais, métodos `GET`, `POST`, `PATCH`, `DELETE` e `OPTIONS`, e os cabeçalhos usados pela aplicação;
+3. registra os routers de autenticação, assistente, transações e metas;
 4. libera o cliente Supabase e o engine SQLAlchemy no encerramento da aplicação.
 
 As rotas atuais são:
@@ -52,34 +54,35 @@ As rotas atuais são:
 - `GET /auth/me`: retorna o usuário da sessão atual;
 - `POST /auth/password-recovery`: solicita recuperação de senha sem revelar se o e-mail existe;
 - `POST /auth/password-recovery/complete`: conclui a troca de senha;
+- `POST /auth/register`: cria uma conta;
+- `POST /assistant/chat`: coordena conversas com Hermes e ferramentas do FinanSys;
 - `POST /transactions`: cria uma transação;
 - `GET /transactions`: lista transações do usuário com filtros e paginação;
 - `GET /transactions/{transaction_id}`: consulta uma transação do usuário;
 - `PATCH /transactions/{transaction_id}`: atualiza uma transação do usuário;
-- `DELETE /transactions/{transaction_id}`: remove uma transação do usuário.
+- `DELETE /transactions/{transaction_id}`: remove uma transação do usuário;
+- `POST /goals`, `GET /goals`, `GET /goals/{goal_id}`, `GET /goals/{goal_id}/progress`, `PATCH /goals/{goal_id}` e `DELETE /goals/{goal_id}`: CRUD e progresso das metas financeiras.
 
-O frontend também implementa uma chamada para `POST /auth/register` em `src/services/auth.ts`, mas esse endpoint não está presente no router FastAPI atual. Até que os dois lados sejam alinhados, o cadastro deve ser tratado como uma integração pendente, não como uma capacidade disponível da API.
+O frontend possui serviços para autenticação, assistente, transações e metas em `apps/web/src/services`. As páginas principais ficam em `apps/web/src/app/(auth)` e `apps/web/src/app/(system)`.
 
-O backend já possui o CRUD de transações completo. No entanto, `apps/web/src/services` contém atualmente apenas `auth.ts`; a integração do frontend com `POST`, `GET`, `PATCH` e `DELETE /transactions` ainda não está implementada.
+## Integração entre interface e API
 
-## Relação com o trabalho em andamento
-
-Na revisão do projeto FINANSYS, a implementação do CRUD de transações foi confirmada como concluída no backend. As tarefas de frontend relacionadas à visualização, cadastro e filtros de movimentações ainda representam trabalho de integração na aplicação web. Portanto, a existência das rotas da API não deve ser interpretada como disponibilidade da funcionalidade completa para o usuário final.
+As telas e serviços web disponíveis podem ser consultados em `apps/web/src/app/(system)` e `apps/web/src/services`. A presença de uma rota no backend, isoladamente, não comprova que todo o fluxo de interface esteja coberto por testes E2E.
 
 ### Camadas do backend
 
 O backend segue uma separação por responsabilidade:
 
 - `src/routers`: camada HTTP. Declara endpoints, parâmetros, dependências, schemas de entrada/saída e códigos de status.
-- `src/schemas`: contratos Pydantic da API, incluindo dados de autenticação e transações.
-- `src/services`: regras de negócio. `TransactionService` valida o acesso por usuário e coordena o repositório; os serviços em `services/auth` coordenam login, refresh, logout, recuperação de senha, lockout e atividade de sessão.
-- `src/repositories`: acesso a dados com SQLAlchemy. As consultas de transações sempre restringem o `user_id` autenticado.
-- `src/models`: modelos ORM e restrições de domínio para `users` e `transactions`.
+- `src/schemas`: contratos Pydantic da API, incluindo dados de autenticação, transações e metas.
+- `src/services`: regras de negócio. `TransactionService` e `GoalService` validam o acesso por usuário e coordenam os repositórios; os serviços em `services/auth` coordenam login, refresh, logout, recuperação de senha, lockout e atividade de sessão; `AssistantService` conecta o chat ao coordenador Hermes.
+- `src/repositories`: acesso a dados com SQLAlchemy. As consultas de transações e metas sempre restringem o `user_id` autenticado.
+- `src/models`: modelos ORM e restrições de domínio para `users`, `transactions` e `goals`.
 - `src/core`: configuração por variáveis de ambiente, engine/sessões do SQLAlchemy, CORS, cookies e dependências de autenticação.
 - `src/shared/supabase`: cliente HTTP e adaptador para os endpoints de autenticação do Supabase.
 - `alembic`: histórico de migrations e configuração de `Base.metadata`.
 
-Para as rotas protegidas, a dependência consulta o cookie de acesso, valida o token no Supabase Auth e verifica no PostgreSQL se a atividade da sessão do usuário continua válida. Em transações, o usuário autenticado é passado ao serviço e usado para limitar todas as operações aos próprios registros.
+Para as rotas protegidas, a dependência consulta o cookie de acesso, valida o token no Supabase Auth e verifica no PostgreSQL se a atividade da sessão do usuário continua válida. Em transações e metas, o usuário autenticado é passado ao serviço e usado para limitar as operações aos próprios registros. O endpoint do assistente também exige sessão válida e encaminha o histórico autorizado ao coordenador.
 
 ## Fluxo de requisição
 
@@ -91,6 +94,10 @@ Para as rotas protegidas, a dependência consulta o cookie de acesso, valida o t
 4. O serviço de autenticação chama o Supabase Auth por HTTP através de `SUPABASE_URL` (no Compose, `http://supabase-kong:8000`).
 5. O backend traduz respostas e falhas do provedor para o contrato público da API.
 6. Em login ou refresh, os tokens retornados pelo provedor são gravados em cookies; o corpo da resposta retorna somente os dados públicos do usuário e `expires_in`.
+
+### Assistente financeiro Hermes
+
+O frontend envia o histórico da conversa a `POST /assistant/chat`. O router autentica o usuário, valida a origem e o schema da conversa. `AssistantCoordinator` encaminha o plano ao endpoint OpenAI-compatible do Hermes e seleciona as ferramentas locais para consulta financeira, geração de PDF, envio ao Mailpit ou busca de livros no Google Books. As consultas financeiras agregam transações do usuário autenticado antes de enviar o contexto ao consultor. Consulte [agente-ia.md](agente-ia.md) para formatos, limites de entrada e configuração dos provedores.
 
 ### Requisição protegida
 
@@ -122,6 +129,7 @@ O acesso relacional da aplicação não passa pelo PostgREST: `src/core/database
 
 - `users`: identidade local associada ao UUID do usuário do Supabase, papel, tentativas de login, lockout e atividade;
 - `transactions`: transações financeiras vinculadas a `users.id`, com tipo, categoria, data, valor e origem do dinheiro.
+- `goals`: metas financeiras vinculadas a `users.id`, com categoria, valores alvo e acumulado, prazo opcional e status.
 
 O Supabase é executado localmente por serviços Docker. O Kong (`supabase-kong`) publica a entrada em `http://localhost:8080` e roteia para GoTrue (`supabase-auth`), PostgREST (`supabase-rest`) e Storage (`supabase-storage`). O backend usa o cliente HTTP próprio em `src/shared/supabase/client.py` e `SupabaseAuthAdapter` para login, refresh, consulta de usuário, logout e recuperação de senha. O Supabase Studio fica disponível em `http://localhost:3001`; o Mailpit, usado pelo fluxo de e-mail local, em `http://localhost:8025`.
 
