@@ -45,6 +45,16 @@ export default function Header() {
             label: "Assistente de IA",
             description: "Seu copiloto de inteligência financeira pessoal"
         },
+        {
+            href: "/admin",
+            label: "Visão geral do sistema",
+            description: "Acompanhe os principais indicadores de clientes do FinanSys"
+        },
+        {
+            href: "/admin/clientes",
+            label: "Gerenciamento de clientes",
+            description: "Consulte contas e controle o acesso dos clientes"
+        },
     ];
 
     const currentLink: LinkItem = links.find(

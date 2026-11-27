@@ -22,6 +22,7 @@ class User(Base):
     first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="client", server_default=text("'client'"))
+    is_active: Mapped[bool] = mapped_column(nullable=False, default=True, server_default=text("true"))
     login_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
     lockout_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

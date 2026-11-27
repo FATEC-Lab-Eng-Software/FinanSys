@@ -17,6 +17,7 @@ Modelo SQLAlchemy: `src.models.auth.User`.
 | `first_name` | `varchar(100)` | Não | Nome obtido dos metadados do usuário no seed/autenticação. |
 | `last_name` | `varchar(100)` | Não | Sobrenome obtido dos metadados do usuário no seed/autenticação. |
 | `role` | `varchar(20)` | Sim | Default `client`; valores permitidos: `admin`, `client` (`ck_users_role_valid`). |
+| `is_active` | `boolean` | Sim | Default `true`; indica se a conta está ativa. Quando `false`, a conta fica suspensa de forma persistente até ser reativada por um administrador. |
 | `login_attempts` | `integer` | Sim | Default `0`; não pode ser negativo (`ck_users_login_attempts_nonnegative`). |
 | `lockout_until` | `timestamptz` | Não | Fim do bloqueio temporário após tentativas inválidas. |
 | `created_at` | `timestamptz` | Sim | Default de servidor `now()`. |
@@ -73,6 +74,7 @@ A cadeia atual é:
 3. `4b8e91d263fa_auth_session_controls`: adiciona `lockout_until` e `last_activity_at`, copiando `last_access_at` para a nova coluna quando aplicável.
 4. `48f554e1dfff_create_transactions_table`: cria `transactions`, suas constraints, FK com cascade e índice por usuário/data.
 5. `df023ce708c3`: cria `goals`, suas constraints, FK com cascade e índice por usuário.
+6. `f6c2a1d9e0b4_user_account_activation`: adiciona `users.is_active` como `boolean NOT NULL DEFAULT true`; usuários existentes permanecem ativos por padrão, e a suspensão fica persistida até a reativação administrativa.
 
 Aplicar alterações com `alembic upgrade head` a partir de `apps/server`. As migrations de transações e metas dependem da existência de `users`; não criar essas tabelas manualmente antes de executar a cadeia.
 

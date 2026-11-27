@@ -6,6 +6,8 @@ import { createContext, useCallback, useContext, useRef, useState } from "react"
 type AuthSessionContextValue = {
   userId: string | null;
   setUserId: (userId: string | null) => void;
+  userRole: "admin" | "client" | null;
+  setUserRole: (role: "admin" | "client" | null) => void;
 };
 
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
@@ -19,6 +21,7 @@ export function useAuthSession() {
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   const [userId, setUserIdState] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<"admin" | "client" | null>(null);
   const currentUserId = useRef<string | null>(null);
   const setUserId = useCallback((nextUserId: string | null) => {
     const previousUserId = currentUserId.current;
@@ -31,7 +34,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthSessionContext.Provider value={{ userId, setUserId }}>
+      <AuthSessionContext.Provider value={{ userId, setUserId, userRole, setUserRole }}>
         {children}
       </AuthSessionContext.Provider>
     </QueryClientProvider>

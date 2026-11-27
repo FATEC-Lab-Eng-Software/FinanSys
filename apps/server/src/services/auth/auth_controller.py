@@ -209,9 +209,12 @@ def process_user_lookup(request: Request, db: Session) -> AuthenticatedUser | Re
         return invalid_session_response()
     try:
         user = SessionService(get_supabase_client()).current_user(access_token)
+        access_profile = UserAccessService(db).access_profile(user.id)
+        if access_profile is None or not access_profile[1]:
+            return invalid_session_response()
         if not UserAccessService(db).check_session_activity(user.id, utc_now()):
             return invalid_session_response()
-        return user
+        return user.model_copy(update={"role": access_profile[0]})
     except SupabaseConfigurationError:
         raise _unavailable_failure() from None
     except AuthFailure as failure:

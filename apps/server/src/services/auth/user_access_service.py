@@ -66,16 +66,31 @@ class UserAccessService:
                 "provider_failure",
             )
         try:
+            if not self._users.is_account_active(user.email):
+                raise AuthFailure(403, "account_suspended", "Esta conta está suspensa. Entre em contato com o suporte.", "account_suspended")
             self._users.record_successful_login(
                 user_id=UUID(user.id),
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
             )
+        except AuthFailure:
+            raise
         except Exception:
             raise AuthFailure(
                 503,
                 "user_store_unavailable",
                 "Não foi possível concluir a autenticação.",
+                "user_store_unavailable",
+            ) from None
+
+    def access_profile(self, user_id: str) -> tuple[str, bool] | None:
+        try:
+            return self._users.access_profile(UUID(user_id))
+        except Exception:
+            raise AuthFailure(
+                503,
+                "user_store_unavailable",
+                "Serviço de autenticação indisponível.",
                 "user_store_unavailable",
             ) from None
