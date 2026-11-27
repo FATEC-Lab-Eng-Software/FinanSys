@@ -460,16 +460,18 @@ export default function Metas() {
                     return (
                         <Card key={goal.id}>
                             <Card.Header>
-                                <div className="flex flex-row items-center gap-2">
+                                <div className="flex min-w-0 flex-1 flex-row items-center gap-2">
                                     <Medal size={35} className="bg-blue-200 rounded-full p-2" />
-                                    <div>
-                                        <h3 className="font-semibold">{goal.name}</h3>
+                                    <div className="min-w-0">
+                                        <h3 className="break-words font-semibold">{goal.name}</h3>
                                         {goal.target_date && (
                                             <p className="text-xs text-gray-500">Prazo: {formatDate(goal.target_date)}</p>
                                         )}
                                     </div>
                                 </div>
-                                <span className="text-xs text-center bg-green-200 w-15 rounded-2xl p-1">{GOAL_CATEGORY_LABELS[goal.category]}</span>
+                                <span className="inline-flex w-fit max-w-[40%] shrink-0 items-center justify-center break-words rounded-2xl bg-green-200 px-2 py-1 text-center text-xs leading-tight whitespace-normal">
+                                    {GOAL_CATEGORY_LABELS[goal.category]}
+                                </span>
                             </Card.Header>
                             <Card.Body>
                                 <p className="text-sm">
