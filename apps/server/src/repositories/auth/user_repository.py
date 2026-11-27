@@ -174,25 +174,31 @@ class UserRepository:
         created_at: datetime | None,
         last_access_at: datetime | None,
         role: str = "client",
+        is_active: bool | None = None,
     ) -> None:
-
-        statement = insert(User).values(
-            id=user_id,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            role=role,
-            login_attempts=0,
-            created_at=created_at or func.now(),
-            last_access_at=last_access_at,
-        )
+        values = {
+            "id": user_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "role": role,
+            "login_attempts": 0,
+            "created_at": created_at or func.now(),
+            "last_access_at": last_access_at,
+        }
+        if is_active is not None:
+            values["is_active"] = is_active
+        statement = insert(User).values(**values)
+        updates = {
+            "id": statement.excluded.id,
+            "first_name": statement.excluded.first_name,
+            "last_name": statement.excluded.last_name,
+            "role": statement.excluded.role,
+        }
+        if is_active is not None:
+            updates["is_active"] = statement.excluded.is_active
         statement = statement.on_conflict_do_update(
             index_elements=[User.email],
-            set_={
-                "id": statement.excluded.id,
-                "first_name": statement.excluded.first_name,
-                "last_name": statement.excluded.last_name,
-                "role": statement.excluded.role,
-            },
+            set_=updates,
         )
         self._session.execute(statement)

@@ -84,9 +84,11 @@ Aplicar alterações com `alembic upgrade head` a partir de `apps/server`. As mi
 
 - `admin@finansys.com` (`admin`, Admin FinanSys);
 - `pedro@gmail.com` (`client`, Pedro Cliente);
-- `maria@gmail.com` (`client`, Maria Cliente).
+- `maria@gmail.com` (`client`, Maria Cliente);
+- `miguel.ferreira@finansys.test` (`client`, Miguel Ferreira);
+- `larissa.monteiro@finansys.test` (`client`, Larissa Monteiro).
 
-O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `role`, `first_name` e `last_name` nos metadados do Auth. Ele prepara perfis de usuário; transações de demonstração podem ser criadas separadamente. Para executar, configure `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` e disponibilize a conexão com o banco.
+O seed usa a senha `123456789` para essas contas, confirma o e-mail e grava `role`, `first_name` e `last_name` nos metadados do Auth. O perfil `larissa.monteiro@finansys.test` recebe `is_active = false`; os demais novos perfis usam o default ativo e o seed preserva estados já existentes. Ele prepara perfis de usuário; transações de demonstração podem ser criadas separadamente. Para executar, configure `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` e disponibilize a conexão com o banco.
 
 ## Fontes do código
 

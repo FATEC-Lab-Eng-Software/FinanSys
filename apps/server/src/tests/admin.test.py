@@ -61,12 +61,13 @@ def test_admin_lists_clients_with_search_filter_and_pagination(
     admin_client: TestClient,
     session: Session,
 ) -> None:
-    first = create_user(session, first_name="Ana", last_name="Silva", email="ana@finansys.test")
-    create_user(session, first_name="Ana", last_name="Costa", email="ana.costa@finansys.test", active=False)
+    search_term = f"Ana{uuid4().hex[:8]}"
+    first = create_user(session, first_name=search_term, last_name="Silva")
+    create_user(session, first_name=search_term, last_name="Costa", active=False)
     create_user(session, first_name="Bruno", email="bruno@finansys.test")
     create_user(session, role="admin", email="outro-admin@finansys.test")
 
-    response = admin_client.get("/admin/clients", params={"search": "ana", "active": "true", "page_size": 1})
+    response = admin_client.get("/admin/clients", params={"search": search_term, "active": "true", "page_size": 1})
 
     assert response.status_code == 200
     body = response.json()
