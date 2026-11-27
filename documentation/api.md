@@ -4,7 +4,7 @@ Contrato observado em `apps/server/main.py`, nos routers, schemas e testes do ba
 
 ## Autenticação
 
-As sessões são mantidas por cookies `HttpOnly`: `finansys_access_token` (path `/`) e `finansys_refresh_token` (path `/auth`). O login e as operações protegidas usam esses cookies; não há Bearer token documentado nos endpoints públicos. Cookies podem ser `Secure` e usam `SameSite` configurado pelo servidor.
+As sessões são mantidas por cookies `HttpOnly`: `finansys_access_token` (path `/`) e `finansys_refresh_token` (path `/auth`). O cliente envia os cookies nas chamadas autenticadas; os atributos `Secure` e `SameSite` são configurados pelo servidor.
 
 Respostas de erro usam, em geral, o formato:
 
@@ -15,6 +15,10 @@ Respostas de erro usam, em geral, o formato:
 O login, refresh, logout e recuperação validam a origem do navegador. Payloads inválidos retornam `422`; uma origem não confiável retorna `403`. Falhas específicas do provedor e limites de tentativa podem retornar `429`, `502` ou `503`, conforme o fluxo.
 
 ## Endpoints de autenticação
+
+### `POST /auth/register`
+
+Cria uma conta no Supabase Auth. Requer origem confiável. Entrada: `{"name":"Dev User","email":"dev@example.com","password":"password"}`. `name` aceita 2–120 caracteres e espaços são normalizados; `email` aceita 3–320 caracteres e é normalizado para minúsculas; `password` exige no mínimo 8 caracteres. Resposta `201`: `{"message":"Cadastro realizado com sucesso."}`. Dados inválidos retornam `422`, e-mail já cadastrado retorna `409` (`email_already_registered`), indisponibilidade do serviço retorna `503` e falhas do provedor podem retornar `502`.
 
 ### `POST /auth/login`
 
@@ -38,7 +42,7 @@ Possíveis respostas observadas: `401` credenciais inválidas, `403` origem não
 
 ### `POST /auth/refresh`
 
-Renova a sessão usando o cookie `finansys_refresh_token`. Não possui corpo. Retorna `200` com o mesmo schema de login e substitui os cookies. Sem sessão válida retorna `401` (`invalid_session`); também pode retornar `500` ou `503`.
+Renova a sessão usando o cookie `finansys_refresh_token`. A chamada é feita sem corpo. Retorna `200` com o mesmo schema de login e substitui os cookies. Sem sessão válida retorna `401` (`invalid_session`); também pode retornar `500` ou `503`.
 
 ### `GET /auth/me`
 
@@ -80,7 +84,7 @@ Conclui a troca usando o token recebido no fluxo de recuperação. Entrada:
 
 ## Endpoints de transações
 
-Todos exigem sessão válida (`finansys_access_token`). O backend implementa o CRUD completo; o frontend atual ainda não possui um serviço de transações para consumir essas rotas. Os dados são sempre filtrados pelo usuário autenticado; acessar uma transação de outro usuário resulta em `404`, não em exposição do recurso.
+Todos exigem sessão válida (`finansys_access_token`). O backend implementa o CRUD completo, e o frontend possui o serviço `apps/web/src/services/transactions.ts`. Os dados são sempre filtrados pelo usuário autenticado; acessar uma transação de outro usuário resulta em `404`, não em exposição do recurso.
 
 Tipos aceitos: `type`: `inflow` ou `outflow`; `category`: `work`, `housing`, `utilities`, `food`, `transportation`, `medical`, `pets`, `travel` ou `other`.
 
@@ -143,6 +147,74 @@ Resposta `200` com o recurso atualizado. Erros: `401`, `404`, `422` (corpo vazio
 
 Exclui uma transação do usuário. Resposta `204`, sem corpo. Erros: `401`, `404` (`transaction_not_found`) ou `503`.
 
+## Endpoints de metas
+
+Todos exigem sessão válida. As operações são limitadas ao usuário autenticado, e metas pertencentes a outra pessoa são respondidas como `404`.
+
+Categorias válidas: `work`, `housing`, `utilities`, `food`, `transportation`, `medical`, `pets`, `travel` e `other`. O status é calculado pela regra de domínio: `pending` ou `done`.
+
+Exemplo de criação:
+
+```json
+{
+  "name":"Reserva de emergência",
+  "category":"other",
+  "target_date":"2027-12-31",
+  "target_value":"5000.00",
+  "accumulated_value":"250.00"
+}
+```
+
+`target_date` é opcional. `target_value` deve ser maior que zero; `accumulated_value` deve ser maior ou igual a zero. Valores aceitam até 12 dígitos e 2 casas decimais.
+
+### `POST /goals`
+
+Cria uma meta. Resposta `201` com `id`, nome, categoria, prazo, valores, status e timestamps.
+
+### `GET /goals`
+
+Lista metas do usuário. Filtros opcionais: `status`, `category`, `limit` (padrão `50`, de 1 a 200) e `offset` (padrão `0`, mínimo 0). Resposta `200` com array de metas.
+
+### `GET /goals/{goal_id}`
+
+Retorna a meta do usuário. Respostas: `200`, `404` se não encontrada ou de outro usuário.
+
+### `GET /goals/{goal_id}/progress`
+
+Retorna `goal_id`, `remaining_value` e `remaining_percentage`, calculados a partir dos valores alvo e acumulado. Respostas: `200` ou `404`.
+
+### `PATCH /goals/{goal_id}`
+
+Atualiza parcialmente nome, categoria, prazo, valor alvo ou valor acumulado. Informe pelo menos um campo; campos não nulos não podem receber `null`, exceto `target_date`, que pode ser limpo. A aplicação recalcula o status ao alterar valores. Respostas: `200`, `404` ou `422` para payload inválido.
+
+### `DELETE /goals/{goal_id}`
+
+Remove a meta. Resposta `204`, sem corpo; também pode retornar `404`.
+
+## Assistente financeiro
+
+### `POST /assistant/chat`
+
+Envia o histórico da conversa ao assistente Hermes. Exige cookie de sessão válido e origem confiável. O corpo contém de 1 a 20 mensagens, cada uma com `role` igual a `user` ou `assistant` e `content` não vazio de até 4.000 caracteres. A última mensagem deve ser do usuário e o conteúdo total deve ter até 12.000 caracteres.
+
+Entrada:
+
+```json
+{"messages":[{"role":"user","content":"Como foram minhas despesas neste mês?"}]}
+```
+
+Resposta `200` segue `AssistantChatResponse`:
+
+```json
+{
+  "message":"Seu resumo financeiro...",
+  "artifacts":[],
+  "books":[]
+}
+```
+
+`message` contém a resposta textual. `artifacts` pode incluir arquivos gerados como PDF, com `filename`, `content_type` e `content_base64`. `books` pode incluir até 10 recomendações com título, autores, descrição, data de publicação e link de referência. Falhas dos provedores ou ferramentas usam o envelope de erro da API com código e mensagem.
+
 ## Endpoint de diagnóstico
 
 ### `GET /`
@@ -151,4 +223,4 @@ Não exige autenticação. Retorna `200` com `{"status":"Backend FastAPI rodando
 
 ## Testes de referência
 
-Os contratos são exercitados em `apps/server/src/tests/auth/` e `apps/server/src/tests/transactions/`. Esses testes confirmam, entre outros, lockout (`423`), recuperação de senha, sessão ociosa, isolamento por usuário, filtros, paginação, validação e códigos `201/200/204/401/404/422/503`.
+Os contratos são exercitados em `apps/server/src/tests/auth/`, `apps/server/src/tests/transactions/` e `apps/server/src/tests/goals/`. Esses testes confirmam, entre outros, lockout (`423`), recuperação de senha, sessão ociosa, isolamento por usuário, filtros, paginação, validação e códigos `201/200/204/401/404/422/503`.

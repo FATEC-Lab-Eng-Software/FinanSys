@@ -10,8 +10,10 @@ from src.routers.auth import router as auth_router
 from src.routers.assistant import router as assistant_router
 from src.routers.transactions import router as transactions_router
 from src.routers.goals import router as goals_router
+from src.routers.notifications import router as notifications_router
 from src.routers.analytics import router as analytics_router
 from src.routers.dashboard import router as dashboard_router
+from src.routers.admin import router as admin_router
 from src.shared.supabase.client import close_supabase_client
 
 @asynccontextmanager
@@ -34,8 +36,10 @@ app.include_router(auth_router)
 app.include_router(assistant_router)
 app.include_router(transactions_router)
 app.include_router(goals_router)
+app.include_router(notifications_router)
 app.include_router(analytics_router)
 app.include_router(dashboard_router)
+app.include_router(admin_router)
 
 @app.get("/")
 def read_root():

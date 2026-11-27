@@ -39,6 +39,12 @@ O backlog do produto está versionado neste repositório e usa histórias no for
 O backlog completo está em [backlog-produto-finansys.pdf](documentation/backlog-produto-finansys.pdf).
 
 - [Arquitetura e infraestrutura](documentation/infraestructure.md)
+- [Contrato da API](documentation/api.md)
+- [Modelo de dados e ERD](documentation/modelo-de-dados.md)
+- [Diagrama entidade-relacionamento (Mermaid)](documentation/diagrama-entidade-relacionamento.md)
+- [Estratégia de testes](documentation/testes.md)
+- [Guia de contribuição](documentation/contribuicao.md)
+- [Assistente financeiro Hermes](documentation/agente-ia.md)
 - [Wiki de execução no GitHub](https://github.com/FATEC-Lab-Eng-Software/FinanSys/wiki)
 - [Requisições de autenticação](rest-client/auth.rest)
 - [Configuração do frontend](apps/web/README.md)
@@ -103,6 +109,8 @@ pnpm dev
 pnpm dev:web
 pnpm dev:server
 ```
+
+`pnpm dev` inicia web e API em background. `pnpm dev:web` e `pnpm dev:server` executam o serviço selecionado em primeiro plano e mantêm o terminal ocupado.
 
 ### Testes e qualidade
 

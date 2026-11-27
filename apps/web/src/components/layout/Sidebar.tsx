@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
     House,
     CirclePlus,
@@ -12,8 +13,11 @@ import {
     PanelLeftClose,
     PanelLeftOpen,
     LogOut,
+    Shield,
+    Users,
 } from "lucide-react";
 import { logout } from "../../services/auth";
+import { useAuthSession } from "../../app/providers";
 
 const links = [
     { href: "/dashboard", label: "Dashboard", icon: House },
@@ -28,6 +32,8 @@ const MOBILE_QUERY = "(max-width: 767px)";
 export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
+    const queryClient = useQueryClient();
+    const { setUserId, setUserRole, userRole } = useAuthSession();
 
     const [isOpen, setIsOpen] = useState<boolean | null>(null);
 
@@ -38,11 +44,23 @@ export default function Sidebar() {
 
     const toggle = () => setIsOpen(!(isOpen ?? !isMobile()));
 
+    const navigationLinks = [...links, ...(userRole === "admin" ? [
+        { href: "/admin", label: "Visão geral", icon: Shield },
+        { href: "/admin/clientes", label: "Gerenciar clientes", icon: Users },
+    ] : [])];
+    const activeLinkHref = navigationLinks.reduce((activeHref, link) => {
+        const matches = link.href === "/" ? pathname === "/" : pathname === link.href || pathname.startsWith(`${link.href}/`);
+        return matches && link.href.length > activeHref.length ? link.href : activeHref;
+    }, "");
+
     const closeOnMobile = () => {
         if (isMobile()) setIsOpen(false);
     };
 
     const handleLogout = async () => {
+        queryClient.clear();
+        setUserId(null);
+        setUserRole(null);
         try {
             await logout();
         } finally {
@@ -89,9 +107,9 @@ export default function Sidebar() {
                     </button>
                 </div>
                 <nav className="flex flex-col gap-1 overflow-y-auto overflow-x-hidden">
-                    {links.map((link) => {
+                    {navigationLinks.map((link) => {
                         const Icon = link.icon;
-                        const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+                        const isActive = link.href === activeLinkHref;
 
                         return (
                             <Link

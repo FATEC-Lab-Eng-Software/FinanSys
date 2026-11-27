@@ -29,3 +29,7 @@
   --color-login-password-toggle-hover: #f0f3f9;
   --color-login-success-background: #e8f5f0;
 }
+
+button {
+  cursor: pointer;
+}

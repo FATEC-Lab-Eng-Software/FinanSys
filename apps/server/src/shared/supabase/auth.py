@@ -34,6 +34,14 @@ class SupabaseAuthAdapter:
             json={"email": email, "password": password, "data": {"full_name": name}},
         )
 
+    def resend_signup_confirmation(self, email: str) -> None:
+        self._request(
+            "POST",
+            "/auth/v1/resend",
+            json={"type": "signup", "email": email},
+            expect_json=False,
+        )
+
     def refresh(self, refresh_token: str) -> dict[str, Any]:
         return self._request(
             "POST",

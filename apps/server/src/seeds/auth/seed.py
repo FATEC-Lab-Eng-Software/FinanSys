@@ -32,7 +32,20 @@ SEEDED_PROFILES = (
         "first_name": "Maria",
         "last_name": "Cliente",
     },
+    {
+        "role": "client",
+        "email": "miguel.ferreira@finansys.test",
+        "first_name": "Miguel",
+        "last_name": "Ferreira",
+    },
+    {
+        "role": "client",
+        "email": "larissa.monteiro@finansys.test",
+        "first_name": "Larissa",
+        "last_name": "Monteiro",
+    },
 )
+INACTIVE_SEEDED_EMAILS = frozenset({"larissa.monteiro@finansys.test"})
 
 
 def _timestamp(value: object) -> datetime | None:
@@ -113,11 +126,13 @@ def _ensure_seed_accounts(
         user = by_email.get(email)
         if user is None:
             response = client.post(
-                f"{settings.supabase_url}/auth/v1/invite",
+                f"{settings.supabase_url}/auth/v1/admin/users",
                 headers=headers,
                 json={
                     "email": email,
-                    "data": {
+                    "password": SEEDED_PASSWORD,
+                    "email_confirm": True,
+                    "user_metadata": {
                         "first_name": profile["first_name"],
                         "last_name": profile["last_name"],
                     },
@@ -201,6 +216,7 @@ def seed() -> int:
                 created_at=_timestamp(auth_user.get("created_at")),
                 last_access_at=_timestamp(auth_user.get("last_sign_in_at")),
                 role=role or "client",
+                is_active=False if normalized_email in INACTIVE_SEEDED_EMAILS else None,
             )
             synced += 1
     return synced

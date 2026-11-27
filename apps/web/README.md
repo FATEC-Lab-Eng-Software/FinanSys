@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aplicação web do FinanSys
 
-## Getting Started
+Frontend do FinanSys desenvolvido com Next.js 16, React 19 e TypeScript. O projeto faz parte do monorepo pnpm e consome a API FastAPI definida em `apps/server`.
 
-First, run the development server:
+## Requisitos
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js compatível com o Next.js 16;
+- pnpm 11.9 ou compatível;
+- API FinanSys disponível em `http://localhost:8000`, localmente ou via Docker Compose.
+
+## Instalação e execução
+
+Na raiz do repositório:
+
+```sh
+pnpm install
+pnpm dev:web
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+A aplicação fica disponível em `http://localhost:3000`. Para subir web, API, banco e serviços auxiliares juntos, use `docker compose up -d --build` na raiz.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Configuração
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+O cliente usa `NEXT_PUBLIC_API_BASE_URL` como endereço da API e assume `http://localhost:8000` quando a variável não está definida. As requisições de autenticação incluem credenciais do navegador para transportar os cookies de sessão. Configure as origens permitidas e os atributos dos cookies no backend para o ambiente utilizado.
 
-## Learn More
+## Estrutura
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app/(auth)`: páginas de login, cadastro e recuperação de senha;
+- `src/app/(system)`: dashboard, gastos, metas, análises e assistente;
+- `src/components`: componentes compartilhados e de interface;
+- `src/services`: clientes de autenticação, assistente, transações e metas;
+- `src/tests`: testes de interface executados pelo Playwright.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Os grupos entre parênteses organizam layouts e proteção de rotas sem aparecer no caminho da URL. A página inicial redireciona para `/dashboard`; as rotas de sistema sem sessão são direcionadas para `/login`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Qualidade
 
-## Deploy on Vercel
+```sh
+pnpm --dir apps/web lint
+pnpm --dir apps/web test
+pnpm --dir apps/web test:ui
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Os testes usam Playwright. O runner inicia o Next em `127.0.0.1:3100` conforme `playwright.config.ts`; pode ser necessário instalar o Chromium com `pnpm --dir apps/web exec playwright install chromium`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Consulte [a documentação de testes do monorepo](../../documentation/testes.md) para detalhes de configuração e cobertura.

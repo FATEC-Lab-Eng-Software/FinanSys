@@ -31,6 +31,16 @@ class FakeUserAccessService:
     def __init__(self, db):
         self.database = db
 
+    def access_profile(self, user_id):
+        if self.database.fail:
+            raise AuthFailure(
+                503,
+                "user_store_unavailable",
+                "Serviço de autenticação indisponível.",
+                "user_store_unavailable",
+            )
+        return "client", True
+
     def check_session_activity(self, user_id, now):
         if self.database.fail:
             raise AuthFailure(
