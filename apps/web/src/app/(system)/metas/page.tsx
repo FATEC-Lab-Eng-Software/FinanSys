@@ -469,7 +469,7 @@ export default function Metas() {
                                         )}
                                     </div>
                                 </div>
-                                <span className="inline-flex w-fit max-w-[40%] shrink-0 items-center justify-center break-words rounded-2xl bg-green-200 px-2 py-1 text-center text-xs leading-tight whitespace-normal">
+                                <span className="inline-flex min-w-0 w-fit max-w-[40%] shrink-0 items-center justify-center break-all rounded-2xl bg-green-200 px-2 py-1 text-center text-xs leading-tight whitespace-normal">
                                     {GOAL_CATEGORY_LABELS[goal.category]}
                                 </span>
                             </Card.Header>
