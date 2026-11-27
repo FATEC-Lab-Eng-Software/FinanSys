@@ -2,15 +2,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Medal, Plus, X } from "lucide-react";
+import { History, Medal, Pencil, Plus, X } from "lucide-react";
 
 import Card from "../../../components/ui/Card";
 import Form from "../../../components/ui/Form";
 import Modal from "../../../components/ui/Modal";
 import ErrorMessage from "../../../components/message/error";
-import { createGoal, deleteGoal, getGoalProgress, listGoals, updateGoal } from "../../../services/goals";
+import {
+    ApiError,
+    createGoal,
+    deleteGoal,
+    getGoalProgress,
+    listGoalHistory,
+    listGoals,
+    updateGoal,
+    updateGoalHistory,
+} from "../../../services/goals";
 import { GOAL_CATEGORY_LABELS } from "../../../types/goals";
-import type { Goal, GoalCategory, GoalProgress, GoalUpdate } from "../../../types/goals";
+import type { Goal, GoalCategory, GoalHistory, GoalProgress, GoalUpdate } from "../../../types/goals";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const CATEGORIES = Object.entries(GOAL_CATEGORY_LABELS) as [GoalCategory, string][];
@@ -22,9 +31,14 @@ const EMPTY_FORM = {
     accumulatedValue: "",
 };
 const TOAST_DURATION = 5000;
+const HISTORY_LIMIT = 200;
 
 function formatDate(value: string) {
     return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
+}
+
+function formatDateTime(value: string) {
+    return new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
 function toAmount(value: string) {
@@ -46,6 +60,13 @@ export default function Metas() {
     const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
+    const [historyGoal, setHistoryGoal] = useState<Goal | null>(null);
+    const [history, setHistory] = useState<GoalHistory[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
+    const [editingEntryId, setEditingEntryId] = useState<number | null>(null);
+    const [entryValue, setEntryValue] = useState("");
+    const [savingEntry, setSavingEntry] = useState(false);
 
     const loadGoals = useCallback(async () => {
         try {
@@ -58,6 +79,19 @@ export default function Metas() {
             setLoadError(true);
         } finally {
             setLoading(false);
+        }
+    }, []);
+
+    const loadHistory = useCallback(async (goalId: number) => {
+        setHistoryLoading(true);
+        setHistoryError(null);
+        try {
+            const data = await listGoalHistory(goalId, { limit: HISTORY_LIMIT });
+            setHistory([...data].reverse());
+        } catch {
+            setHistoryError("Não foi possível carregar o histórico.");
+        } finally {
+            setHistoryLoading(false);
         }
     }, []);
 
@@ -80,6 +114,14 @@ export default function Metas() {
         setForm(EMPTY_FORM);
     }, []);
 
+    const closeHistory = useCallback(() => {
+        setHistoryGoal(null);
+        setHistory([]);
+        setHistoryError(null);
+        setEditingEntryId(null);
+        setEntryValue("");
+    }, []);
+
     function openCreate() {
         setEditingGoal(null);
         setForm(EMPTY_FORM);
@@ -96,6 +138,41 @@ export default function Metas() {
             accumulatedValue: toInputAmount(goal.accumulated_value),
         });
         setShowForm(true);
+    }
+
+    function openHistory(goal: Goal) {
+        setHistoryGoal(goal);
+        setHistory([]);
+        setEditingEntryId(null);
+        setEntryValue("");
+        void loadHistory(goal.id);
+    }
+
+    function startEditEntry(entry: GoalHistory) {
+        setEditingEntryId(entry.id);
+        setEntryValue(toInputAmount(entry.value));
+        setHistoryError(null);
+    }
+
+    function cancelEditEntry() {
+        setEditingEntryId(null);
+        setEntryValue("");
+    }
+
+    async function saveEntry(entry: GoalHistory) {
+        if (!historyGoal) return;
+        setSavingEntry(true);
+        setHistoryError(null);
+        try {
+            await updateGoalHistory(historyGoal.id, entry.id, { value: toAmount(entryValue) });
+            cancelEditEntry();
+            await loadHistory(historyGoal.id);
+            await loadGoals();
+        } catch (error) {
+            setHistoryError(error instanceof ApiError ? error.message : "Não foi possível atualizar o registro.");
+        } finally {
+            setSavingEntry(false);
+        }
     }
 
     async function saveNewGoal() {
@@ -261,6 +338,98 @@ export default function Metas() {
                 </Card>
             </Modal>
 
+            <Modal open={historyGoal !== null} onClose={closeHistory} labelledBy="goal-history-title">
+                <Card>
+                    <Card.Header>
+                        <h3 id="goal-history-title" className="font-semibold">
+                            Histórico{historyGoal ? ` - ${historyGoal.name}` : ""}
+                        </h3>
+                        <button type="button" onClick={closeHistory} aria-label="Fechar" className="text-gray-500">
+                            <X size={20} />
+                        </button>
+                    </Card.Header>
+                    <Card.Body className="max-h-96 overflow-y-auto">
+                        {historyLoading && <p className="text-sm text-gray-500">Carregando histórico...</p>}
+                        {historyError && (
+                            <p role="alert" className="text-sm text-red-600">
+                                {historyError}
+                            </p>
+                        )}
+                        {!historyLoading && !historyError && history.length === 0 && (
+                            <p className="text-sm text-gray-500">Nenhum registro para esta meta.</p>
+                        )}
+                        <ul className="flex flex-col divide-y divide-gray-200">
+                            {history.map((entry) => {
+                                const negative = Number(entry.value) < 0;
+                                const isEditing = editingEntryId === entry.id;
+
+                                return (
+                                    <li key={entry.id} className="flex items-center justify-between gap-3 py-3">
+                                        <span className="text-xs text-gray-500">{formatDateTime(entry.created_at)}</span>
+                                        {isEditing ? (
+                                            <div className="flex flex-row items-center gap-2">
+                                                <input
+                                                    value={entryValue}
+                                                    onChange={(event) => setEntryValue(event.target.value)}
+                                                    inputMode="decimal"
+                                                    aria-label="Valor do registro"
+                                                    className="w-28 rounded-lg border border-gray-300 px-2 py-1 text-sm"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => saveEntry(entry)}
+                                                    disabled={savingEntry}
+                                                    className="text-sm text-blue-700 disabled:opacity-60"
+                                                >
+                                                    {savingEntry ? "Salvando..." : "Salvar"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelEditEntry}
+                                                    className="text-sm text-gray-500"
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-row items-center gap-3">
+                                                <span
+                                                    className={`text-sm font-medium ${negative ? "text-red-600" : "text-green-600"}`}
+                                                >
+                                                    {negative ? "" : "+"}
+                                                    {currency.format(Number(entry.value))}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startEditEntry(entry)}
+                                                    aria-label="Editar registro"
+                                                    className="text-gray-500 hover:text-blue-700"
+                                                >
+                                                    <Pencil size={15} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </Card.Body>
+                    <Card.Footer>
+                        <span className="text-sm text-gray-500">
+                            {historyGoal &&
+                                `Acumulado: ${currency.format(Number(goals.find((goal) => goal.id === historyGoal.id)?.accumulated_value ?? historyGoal.accumulated_value))}`}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={closeHistory}
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
+                        >
+                            Fechar
+                        </button>
+                    </Card.Footer>
+                </Card>
+            </Modal>
+
             {loading && <p className="text-sm text-gray-500">Carregando metas...</p>}
             {loadError && <ErrorMessage title="Não foi possível carregar as informações." />}
             {!loading && !loadError && goals.length === 0 && (
@@ -319,6 +488,14 @@ export default function Metas() {
                                         `Faltam ${currency.format(Number(goalProgress.remaining_value))} (${goalProgress.remaining_percentage}%)`}
                                 </span>
                                 <div className="flex flex-row gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => openHistory(goal)}
+                                        className="flex flex-row items-center gap-1 text-sm text-gray-600"
+                                    >
+                                        <History size={14} />
+                                        Histórico
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => openEdit(goal)}

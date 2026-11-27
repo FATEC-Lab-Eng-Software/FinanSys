@@ -1,4 +1,13 @@
-import type { Goal, GoalCreate, GoalFilters, GoalProgress, GoalUpdate } from "../types/goals";
+import type {
+    Goal,
+    GoalCreate,
+    GoalFilters,
+    GoalHistory,
+    GoalHistoryFilters,
+    GoalHistoryUpdate,
+    GoalProgress,
+    GoalUpdate,
+} from "../types/goals";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -41,7 +50,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     return (await response.json()) as T;
 }
 
-function toQueryString(filters: GoalFilters): string {
+function toQueryString(filters: GoalFilters | GoalHistoryFilters): string {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) params.set(key, String(value));
@@ -72,4 +81,19 @@ export function updateGoal(goalId: number, data: GoalUpdate): Promise<Goal> {
 
 export function deleteGoal(goalId: number): Promise<void> {
     return request<void>(`/goals/${goalId}`, { method: "DELETE" });
+}
+
+export function listGoalHistory(goalId: number, filters: GoalHistoryFilters = {}): Promise<GoalHistory[]> {
+    return request<GoalHistory[]>(`/goals/${goalId}/history${toQueryString(filters)}`);
+}
+
+export function updateGoalHistory(
+    goalId: number,
+    historyId: number,
+    data: GoalHistoryUpdate,
+): Promise<GoalHistory> {
+    return request<GoalHistory>(`/goals/${goalId}/history/${historyId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+    });
 }

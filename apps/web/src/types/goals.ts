@@ -57,3 +57,21 @@ export type GoalProgress = {
     remaining_value: string;
     remaining_percentage: string;
 };
+
+export type GoalHistory = {
+    id: number;
+    goal_id: number;
+    value: string;
+    created_at: string;
+};
+
+export type GoalHistoryFilters = {
+    start?: string;
+    end?: string;
+    limit?: number;
+    offset?: number;
+};
+
+export type GoalHistoryUpdate = {
+    value: string;
+};
