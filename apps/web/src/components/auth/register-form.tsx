@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { register } from "../../services/auth";
 import {
   validateConfirmPassword,
@@ -20,7 +19,6 @@ type FormErrors = {
 };
 
 export function RegisterForm() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,14 +27,6 @@ export function RegisterForm() {
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (!success) return;
-    const timer = setTimeout(() => {
-      router.push("/login");
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [success, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -78,8 +68,8 @@ export function RegisterForm() {
     return (
       <div className="grid justify-items-center gap-[15px] text-center" role="status" aria-live="polite">
         <span className="grid size-12 place-items-center rounded-full bg-login-success-background text-2xl text-login-success" aria-hidden="true">✓</span>
-        <h2 className="m-0 text-[22px]">Conta criada com sucesso!</h2>
-        <p className="m-0 mb-[5px] text-[13px] leading-[1.65] text-login-text-muted">Seu cadastro foi realizado. Você será redirecionado para a tela de login em instantes.</p>
+        <h2 className="m-0 text-[22px]">Confirme seu e-mail</h2>
+        <p className="m-0 mb-[5px] text-[13px] leading-[1.65] text-login-text-muted">Enviamos um link de confirmação para {email.trim().toLowerCase()}. Confirme seu endereço antes de entrar.</p>
         <Link className="inline-flex min-h-12 items-center justify-center rounded-xl border-0 px-5 [background:linear-gradient(100deg,var(--color-login-blue),var(--color-login-navy))] text-[13px] font-semibold text-white transition-[filter,transform] duration-150 hover:text-white hover:brightness-[1.08] active:translate-y-px" href="/login">
           Ir para o login agora
         </Link>
@@ -133,7 +123,7 @@ export function RegisterForm() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="vinicius@finansys.com.br"
+            placeholder="example@finansys.com.br"
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
