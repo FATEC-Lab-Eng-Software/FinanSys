@@ -11,6 +11,7 @@ from src.routers.assistant import router as assistant_router
 from src.routers.transactions import router as transactions_router
 from src.routers.goals import router as goals_router
 from src.routers.analytics import router as analytics_router
+from src.routers.dashboard import router as dashboard_router
 from src.shared.supabase.client import close_supabase_client
 
 @asynccontextmanager
@@ -34,6 +35,7 @@ app.include_router(assistant_router)
 app.include_router(transactions_router)
 app.include_router(goals_router)
 app.include_router(analytics_router)
+app.include_router(dashboard_router)
 
 @app.get("/")
 def read_root():
