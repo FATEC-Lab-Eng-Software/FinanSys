@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { register } from "../../services/auth";
+import { register, resendConfirmationEmail } from "../../services/auth";
 import {
   validateConfirmPassword,
   validateEmail,
@@ -27,6 +27,8 @@ export function RegisterForm() {
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
+  const [resendConfirmationMessage, setResendConfirmationMessage] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,12 +66,33 @@ export function RegisterForm() {
     }
   }
 
+  async function handleResendConfirmation() {
+    setResendingConfirmation(true);
+    setResendConfirmationMessage("");
+    try {
+      await resendConfirmationEmail(email.trim().toLowerCase());
+      setResendConfirmationMessage("Se este e-mail estiver aguardando confirmação, enviaremos um novo link.");
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "email_rate_limited") {
+        setResendConfirmationMessage("Aguarde alguns minutos antes de solicitar outro e-mail.");
+      } else {
+        setResendConfirmationMessage("Não foi possível reenviar o e-mail agora. Tente novamente em instantes.");
+      }
+    } finally {
+      setResendingConfirmation(false);
+    }
+  }
+
   if (success) {
     return (
       <div className="grid justify-items-center gap-[15px] text-center" role="status" aria-live="polite">
         <span className="grid size-12 place-items-center rounded-full bg-login-success-background text-2xl text-login-success" aria-hidden="true">✓</span>
         <h2 className="m-0 text-[22px]">Confirme seu e-mail</h2>
-        <p className="m-0 mb-[5px] text-[13px] leading-[1.65] text-login-text-muted">Enviamos um link de confirmação para {email.trim().toLowerCase()}. Confirme seu endereço antes de entrar.</p>
+        <p className="m-0 mb-[5px] text-[13px] leading-[1.65] text-login-text-muted">Se esta conta precisar de confirmação, enviaremos um link para {email.trim().toLowerCase()}. Confira sua caixa de entrada e o spam.</p>
+        <button className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-login-border bg-transparent px-5 text-[13px] font-semibold text-login-blue transition-colors hover:bg-login-blue/5 disabled:cursor-wait disabled:opacity-70" type="button" onClick={handleResendConfirmation} disabled={resendingConfirmation}>
+          {resendingConfirmation ? "Enviando..." : "Reenviar e-mail de confirmação"}
+        </button>
+        {resendConfirmationMessage && <p className="m-0 text-[12px] leading-[1.5] text-login-text-muted">{resendConfirmationMessage}</p>}
         <Link className="inline-flex min-h-12 items-center justify-center rounded-xl border-0 px-5 [background:linear-gradient(100deg,var(--color-login-blue),var(--color-login-navy))] text-[13px] font-semibold text-white transition-[filter,transform] duration-150 hover:text-white hover:brightness-[1.08] active:translate-y-px" href="/login">
           Ir para o login agora
         </Link>

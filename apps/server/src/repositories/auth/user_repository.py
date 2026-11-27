@@ -202,3 +202,26 @@ class UserRepository:
             set_=updates,
         )
         self._session.execute(statement)
+
+    def sync_registered_user(
+        self,
+        *,
+        user_id: UUID,
+        email: str,
+        first_name: str | None,
+        last_name: str | None,
+        created_at: datetime | None = None,
+    ) -> None:
+        try:
+            self.sync_auth_user(
+                user_id=user_id,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                created_at=created_at,
+                last_access_at=None,
+            )
+            self._session.commit()
+        except Exception:
+            self._session.rollback()
+            raise

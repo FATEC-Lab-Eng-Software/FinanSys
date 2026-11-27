@@ -56,6 +56,17 @@ class PasswordRecoveryRequest(BaseModel):
             raise ValueError("Endereço de e-mail inválido")
         return value.lower()
 
+class ConfirmationEmailRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_shape(cls, value: str) -> str:
+        value = value.strip()
+        if "@" not in value or value.startswith("@") or value.endswith("@"):
+            raise ValueError("Endereço de e-mail inválido")
+        return value.lower()
+
 class PasswordRecoveryCompleteRequest(BaseModel):
     access_token: str = Field(min_length=1, max_length=4096)
     new_password: str = Field(min_length=8)

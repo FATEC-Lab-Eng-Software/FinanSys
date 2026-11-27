@@ -53,6 +53,17 @@ export async function register(data: RegisterData): Promise<{ message?: string }
   return response.json().catch(() => ({ message: "success" }));
 }
 
+export async function resendConfirmationEmail(email: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/auth/resend-confirmation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email }),
+  });
+  if (response.status === 429) throw new Error("email_rate_limited");
+  if (!response.ok) throw new Error("confirmation_resend_failed");
+}
+
 export async function requestPasswordRecovery(email: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/auth/password-recovery`, {
     method: "POST",

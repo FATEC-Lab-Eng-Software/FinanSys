@@ -84,6 +84,29 @@ class UserAccessService:
                 "user_store_unavailable",
             ) from None
 
+    def record_registered_user(self, user: AuthenticatedUser) -> None:
+        if not user.email:
+            raise AuthFailure(
+                502,
+                "registration_failed",
+                "Não foi possível concluir o cadastro.",
+                "provider_failure",
+            )
+        try:
+            self._users.sync_registered_user(
+                user_id=UUID(user.id),
+                email=user.email,
+                first_name=user.first_name,
+                last_name=user.last_name,
+            )
+        except Exception:
+            raise AuthFailure(
+                503,
+                "user_store_unavailable",
+                "Não foi possível concluir o cadastro.",
+                "user_store_unavailable",
+            ) from None
+
     def access_profile(self, user_id: str) -> tuple[str, bool] | None:
         try:
             return self._users.access_profile(UUID(user_id))
