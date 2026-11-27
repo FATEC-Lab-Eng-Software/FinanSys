@@ -20,6 +20,7 @@ from src.core.auth_cookies import (
 from src.core.security import verify_browser_origin
 from src.schemas.auth import (
     AuthenticatedUser,
+    ConfirmationEmailRequest,
     LoginRequest,
     LoginResponse,
     RegisterRequest,
@@ -80,7 +81,7 @@ async def process_register(request: Request, db: Session) -> dict[str, str]:
         raise HTTPException(status_code=422, detail={"code": "invalid_request", "message": "Dados de cadastro inválidos."}) from None
 
     try:
-        SupabaseAuthAdapter(get_supabase_client()).register(payload.email, payload.password, payload.name)
+        result = SupabaseAuthAdapter(get_supabase_client()).register(payload.email, payload.password, payload.name)
     except SupabaseConfigurationError:
         raise _unavailable_failure() from None
     except SupabaseAuthError as error:
@@ -89,6 +90,20 @@ async def process_register(request: Request, db: Session) -> dict[str, str]:
         raise _public_failure(AuthFailure(502, "registration_failed", "Não foi possível concluir o cadastro.", "provider_failure")) from None
     except Exception:
         raise _internal_failure() from None
+    auth_user = result.get("user") if isinstance(result.get("user"), dict) else result
+    identities = auth_user.get("identities") if isinstance(auth_user, dict) else None
+    if isinstance(identities, list) and identities and auth_user.get("id") and auth_user.get("email"):
+        name_parts = payload.name.split(maxsplit=1)
+        user = AuthenticatedUser(
+            id=str(auth_user["id"]),
+            email=str(auth_user["email"]).strip().lower(),
+            first_name=name_parts[0],
+            last_name=name_parts[1] if len(name_parts) > 1 else None,
+        )
+        try:
+            UserAccessService(db).record_registered_user(user)
+        except AuthFailure as failure:
+            raise _public_failure(failure) from None
     return {"message": "Cadastro realizado com sucesso."}
 
 
@@ -209,9 +224,12 @@ def process_user_lookup(request: Request, db: Session) -> AuthenticatedUser | Re
         return invalid_session_response()
     try:
         user = SessionService(get_supabase_client()).current_user(access_token)
+        access_profile = UserAccessService(db).access_profile(user.id)
+        if access_profile is None or not access_profile[1]:
+            return invalid_session_response()
         if not UserAccessService(db).check_session_activity(user.id, utc_now()):
             return invalid_session_response()
-        return user
+        return user.model_copy(update={"role": access_profile[0]})
     except SupabaseConfigurationError:
         raise _unavailable_failure() from None
     except AuthFailure as failure:
@@ -240,6 +258,28 @@ def process_password_recovery_request(request: Request, payload: PasswordRecover
     except Exception:
         raise _internal_failure() from None
     return {"message": "Se houver uma conta associada, enviaremos instruções para redefinir a senha."}
+
+
+def process_resend_confirmation(request: Request, payload: ConfirmationEmailRequest) -> dict[str, str]:
+    verify_browser_origin(request)
+    try:
+        SupabaseAuthAdapter(get_supabase_client()).resend_signup_confirmation(payload.email)
+    except SupabaseConfigurationError:
+        raise _unavailable_failure() from None
+    except SupabaseAuthError as error:
+        if error.status == 429:
+            raise HTTPException(
+                status_code=429,
+                detail={"code": "email_rate_limited", "message": "Aguarde antes de solicitar outro e-mail de confirmação."},
+            ) from None
+        if error.status is None or error.status >= 500:
+            raise _unavailable_failure() from None
+        raise _public_failure(
+            AuthFailure(502, "confirmation_resend_failed", "Não foi possível processar o reenvio do e-mail.", "provider_failure")
+        ) from None
+    except Exception:
+        raise _internal_failure() from None
+    return {"message": "Se esta conta ainda precisar de confirmação, um novo link será enviado."}
 
 
 def process_password_recovery_complete(

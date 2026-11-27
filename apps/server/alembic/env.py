@@ -7,6 +7,7 @@ from src.core.config import settings
 from src.models.base import Base
 
 from src.models.auth import user
+from src.models import notification
 
 from src.models.goal_history import GoalHistory  
 

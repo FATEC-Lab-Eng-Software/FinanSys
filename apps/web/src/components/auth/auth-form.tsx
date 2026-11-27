@@ -3,12 +3,16 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { login } from "../../services/auth";
+import { useAuthSession } from "../../app/providers";
 import { validateEmail, validatePassword } from "../../utils/auth-validation";
 import { PasswordInput } from "./password-input";
 
 export function AuthForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { setUserId, setUserRole } = useAuthSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -26,6 +30,9 @@ export function AuthForm() {
     setSubmitting(true);
     try {
       await login({ email: email.trim(), password });
+      queryClient.clear();
+      setUserId(null);
+      setUserRole(null);
       router.push("/dashboard");
     } catch (error) {
       if (error instanceof Error && error.message === "account_locked") {

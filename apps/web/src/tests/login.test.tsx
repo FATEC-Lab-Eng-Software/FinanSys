@@ -69,7 +69,7 @@ test("logs blocked accounts without exposing the blocked state in the form", asy
   await page.getByRole("button", { name: "Entrar" }).click();
 
   await expect(page.locator(".form-alert")).toHaveCount(0);
-  expect(logs.some((message) => message.includes("Conta bloqueada"))).toBe(true);
+  await expect.poll(() => logs.some((message) => message.includes("Conta bloqueada"))).toBe(true);
 });
 
 test("sends credentials and redirects to the dashboard", async ({ page }) => {

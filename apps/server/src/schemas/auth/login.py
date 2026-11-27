@@ -39,12 +39,24 @@ class AuthenticatedUser(BaseModel):
     email: str | None = None
     first_name: str | None = None
     last_name: str | None = None
+    role: str = "client"
 
 class LoginResponse(BaseModel):
     user: AuthenticatedUser
     expires_in: int
 
 class PasswordRecoveryRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_shape(cls, value: str) -> str:
+        value = value.strip()
+        if "@" not in value or value.startswith("@") or value.endswith("@"):
+            raise ValueError("Endereço de e-mail inválido")
+        return value.lower()
+
+class ConfirmationEmailRequest(BaseModel):
     email: str = Field(min_length=3, max_length=320)
 
     @field_validator("email")

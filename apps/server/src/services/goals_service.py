@@ -17,8 +17,9 @@ from src.schemas.goals_schemas import (
     GoalResponse,
     GoalUpdate,
 )
+from src.services.notifications_service import NotificationService
 
-import Logging
+import logging
 
 CENTS = Decimal("0.01")
 
@@ -43,6 +44,8 @@ class GoalService:
         values = payload.model_dump()
         values["status"] = self._resolve_status(values["target_value"], values["accumulated_value"])
         try:
+            if values["status"] == GoalStatus.DONE.value:
+                self._stage_goal_completed(user_id, values["name"])
             goal = self._goals.create(user_id=UUID(user_id), values=values)
             if goal.accumulated_value > 0:
                 self._history.add(goal_id=goal.id, value=goal.accumulated_value)
@@ -65,13 +68,15 @@ class GoalService:
     def update(self, user_id: str, goal_id: int, payload: GoalUpdate) -> GoalResponse:
         goal = self._find(user_id, goal_id, for_update=True)
         values = payload.model_dump(exclude_unset=True)
-
         new_balance = values.get("accumulated_value", goal.accumulated_value)
         delta = new_balance - goal.accumulated_value
+        was_done = goal.status == GoalStatus.DONE.value
         values["status"] = self._resolve_status(
             values.get("target_value", goal.target_value), new_balance
         )
         try:
+            if not was_done and values["status"] == GoalStatus.DONE.value:
+                self._stage_goal_completed(user_id, values.get("name", goal.name))
             self._goals.update(goal, values=values)
             if delta != 0:
                 self._history.add(goal_id=goal.id, value=delta)
@@ -129,6 +134,8 @@ class GoalService:
 
         try:
             entry.value = payload.value
+            if goal.status != GoalStatus.DONE.value and new_balance >= goal.target_value:
+                self._stage_goal_completed(user_id, goal.name)
             self._goals.update(
                 goal,
                 values={
@@ -157,6 +164,14 @@ class GoalService:
         if accumulated_value >= target_value:
             return GoalStatus.DONE.value
         return GoalStatus.PENDING.value
+
+    def _stage_goal_completed(self, user_id: str, goal_name: str) -> None:
+        NotificationService(self._session).stage(
+            user_id,
+            category="goal",
+            title="Meta concluída",
+            description=f"Parabéns! Você concluiu a meta {goal_name}.",
+        )
 
     def _store_unavailable(self) -> GoalFailure:
         logger.exception("goal store error")

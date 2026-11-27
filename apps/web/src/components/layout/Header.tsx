@@ -2,7 +2,8 @@
 'use client';
 
 import { usePathname } from "next/navigation";
-import { Bell, User } from "lucide-react";
+import { User } from "lucide-react";
+import NotificationMenu from "./NotificationMenu";
 
 type LinkItem = {
     href: string;
@@ -44,6 +45,16 @@ export default function Header() {
             label: "Assistente de IA",
             description: "Seu copiloto de inteligência financeira pessoal"
         },
+        {
+            href: "/admin",
+            label: "Visão geral do sistema",
+            description: "Acompanhe os principais indicadores de clientes do FinanSys"
+        },
+        {
+            href: "/admin/clientes",
+            label: "Gerenciamento de clientes",
+            description: "Consulte contas e controle o acesso dos clientes"
+        },
     ];
 
     const currentLink: LinkItem = links.find(
@@ -67,9 +78,7 @@ export default function Header() {
             </div>
 
             <div className="flex shrink-0 items-center gap-3">
-                <button className="flex items-center justify-center border-1 border-gray-200 h-9 w-9 rounded-full bg-primary">
-                    <Bell size={16} />
-                </button>
+                <NotificationMenu />
                 <button type="button" aria-label="Perfil do usuário" className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-primary">
                     <User size={16} />
                 </button>
