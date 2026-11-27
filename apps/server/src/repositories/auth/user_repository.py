@@ -3,10 +3,9 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import select, text, update
+from sqlalchemy import func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
 
 from src.models.auth import User
 
@@ -16,6 +15,51 @@ class UserRepository:
 
     def record_failed_login(self, email: str) -> None:
         self.record_failed_login_and_get_lockout(email)
+
+    def is_account_active(self, email: str) -> bool:
+        user = self._session.scalar(select(User).where(User.email == email.strip().lower()))
+        return user is None or user.is_active
+
+    def access_profile(self, user_id: UUID) -> tuple[str, bool] | None:
+        user = self._session.scalar(select(User).where(User.id == user_id))
+        if user is None:
+            return None
+        return user.role, user.is_active
+
+    def list_clients(self, *, search: str, active: bool | None, limit: int, offset: int) -> list[User]:
+        statement = select(User).where(User.role == "client")
+        if search:
+            pattern = f"%{search.strip()}%"
+            statement = statement.where(or_(User.email.ilike(pattern), User.first_name.ilike(pattern), User.last_name.ilike(pattern)))
+        if active is not None:
+            statement = statement.where(User.is_active == active)
+        return list(self._session.scalars(statement.order_by(User.created_at.desc()).limit(limit).offset(offset)))
+
+    def client_overview(self) -> dict[str, int]:
+        month_start = func.date_trunc("month", func.current_timestamp())
+        values = self._session.execute(
+            select(
+                func.count(User.id),
+                func.count(User.id).filter(User.is_active.is_(True)),
+                func.count(User.id).filter(User.is_active.is_(False)),
+                func.count(User.id).filter(User.created_at >= month_start),
+            ).where(User.role == "client")
+        ).one()
+        return {
+            "clients_total": values[0],
+            "clients_active": values[1],
+            "clients_suspended": values[2],
+            "clients_created_this_month": values[3],
+        }
+
+    def update_client_status(self, user_id: UUID, active: bool) -> User | None:
+        user = self._session.scalar(select(User).where(User.id == user_id, User.role == "client"))
+        if user is None:
+            return None
+        user.is_active = active
+        self._session.commit()
+        self._session.refresh(user)
+        return user
 
     def check_login_lockout(self, email: str) -> datetime | None:
         normalized_email = email.strip().lower()
@@ -65,6 +109,7 @@ class UserRepository:
             update(User)
             .where(
                 User.id == user_id,
+                User.is_active.is_(True),
                 User.last_activity_at.is_not(None),
                 User.last_activity_at > now - timedelta(minutes=15),
             )
@@ -79,6 +124,7 @@ class UserRepository:
             self._session.scalar(
                 select(User.id).where(
                     User.id == user_id,
+                    User.is_active.is_(True),
                     User.last_activity_at.is_not(None),
                     User.last_activity_at > now - timedelta(minutes=15),
                 )
@@ -128,25 +174,54 @@ class UserRepository:
         created_at: datetime | None,
         last_access_at: datetime | None,
         role: str = "client",
+        is_active: bool | None = None,
     ) -> None:
-
-        statement = insert(User).values(
-            id=user_id,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            role=role,
-            login_attempts=0,
-            created_at=created_at or func.now(),
-            last_access_at=last_access_at,
-        )
+        values = {
+            "id": user_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "role": role,
+            "login_attempts": 0,
+            "created_at": created_at or func.now(),
+            "last_access_at": last_access_at,
+        }
+        if is_active is not None:
+            values["is_active"] = is_active
+        statement = insert(User).values(**values)
+        updates = {
+            "id": statement.excluded.id,
+            "first_name": statement.excluded.first_name,
+            "last_name": statement.excluded.last_name,
+            "role": statement.excluded.role,
+        }
+        if is_active is not None:
+            updates["is_active"] = statement.excluded.is_active
         statement = statement.on_conflict_do_update(
             index_elements=[User.email],
-            set_={
-                "id": statement.excluded.id,
-                "first_name": statement.excluded.first_name,
-                "last_name": statement.excluded.last_name,
-                "role": statement.excluded.role,
-            },
+            set_=updates,
         )
         self._session.execute(statement)
+
+    def sync_registered_user(
+        self,
+        *,
+        user_id: UUID,
+        email: str,
+        first_name: str | None,
+        last_name: str | None,
+        created_at: datetime | None = None,
+    ) -> None:
+        try:
+            self.sync_auth_user(
+                user_id=user_id,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                created_at=created_at,
+                last_access_at=None,
+            )
+            self._session.commit()
+        except Exception:
+            self._session.rollback()
+            raise

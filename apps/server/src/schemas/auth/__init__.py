@@ -2,6 +2,7 @@
 
 from src.schemas.auth.login import (
     AuthenticatedUser,
+    ConfirmationEmailRequest,
     LoginRequest,
     LoginResponse,
     RegisterRequest,
@@ -9,4 +10,4 @@ from src.schemas.auth.login import (
     PasswordRecoveryRequest,
 )
 
-__all__ = ["AuthenticatedUser", "LoginRequest", "LoginResponse", "RegisterRequest", "PasswordRecoveryRequest", "PasswordRecoveryCompleteRequest"]
+__all__ = ["AuthenticatedUser", "LoginRequest", "LoginResponse", "RegisterRequest", "PasswordRecoveryRequest", "PasswordRecoveryCompleteRequest", "ConfirmationEmailRequest"]

@@ -12,7 +12,7 @@ import { PasswordInput } from "./password-input";
 export function AuthForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { setUserId } = useAuthSession();
+  const { setUserId, setUserRole } = useAuthSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -32,6 +32,7 @@ export function AuthForm() {
       await login({ email: email.trim(), password });
       queryClient.clear();
       setUserId(null);
+      setUserRole(null);
       router.push("/dashboard");
     } catch (error) {
       if (error instanceof Error && error.message === "account_locked") {

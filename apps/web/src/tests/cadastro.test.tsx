@@ -16,9 +16,15 @@ test("shows a responsive registration form with Figma elements and link to login
 
   // Painel lateral e benefícios do protótipo
   await expect(page.getByRole("heading", { name: "Comece a organizar suas finanças hoje." })).toBeVisible();
-  await expect(page.getByText("Cadastro rápido e seguro")).toBeVisible();
-  await expect(page.getByText("Painel completo")).toBeVisible();
-  await expect(page.getByText("Inteligência financeira")).toBeVisible();
+  if (testInfo.project.name === "mobile-chrome") {
+    await expect(page.getByText("Cadastro rápido e seguro")).toBeHidden();
+    await expect(page.getByText("Painel completo")).toBeHidden();
+    await expect(page.getByText("Inteligência financeira")).toBeHidden();
+  } else {
+    await expect(page.getByText("Cadastro rápido e seguro")).toBeVisible();
+    await expect(page.getByText("Painel completo")).toBeVisible();
+    await expect(page.getByText("Inteligência financeira")).toBeVisible();
+  }
 
   const pageWidth = await page.locator("body").evaluate((body) => body.scrollWidth);
   expect(pageWidth).toBeLessThanOrEqual(testInfo.project.use.viewport?.width ?? 1280);
@@ -91,13 +97,30 @@ test("shows a clear message when email is already registered", async ({ page }) 
   await expect(page.locator(".form-alert")).toHaveText("Este e-mail já está cadastrado. Tente fazer login.");
 });
 
-test("submits valid registration, shows confirmation and redirects to login", async ({ page }) => {
+test("submits valid registration and can resend confirmation email", async ({ page }) => {
   let submittedPayload: unknown;
+  let resendPayload: unknown;
+  let resendAttempts = 0;
   await page.route("**/auth/register", async (route) => {
     submittedPayload = route.request().postDataJSON();
     await route.fulfill({
       status: 201,
       json: { message: "Cadastro realizado com sucesso." },
+    });
+  });
+  await page.route("**/auth/resend-confirmation", async (route) => {
+    resendPayload = route.request().postDataJSON();
+    resendAttempts += 1;
+    if (resendAttempts > 1) {
+      await route.fulfill({
+        status: 429,
+        json: { detail: { code: "email_rate_limited" } },
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 202,
+      json: { message: "Se a conta precisar de confirmação, enviaremos um novo link." },
     });
   });
 
@@ -114,6 +137,13 @@ test("submits valid registration, shows confirmation and redirects to login", as
   });
 
   await expect(page.getByRole("status")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Conta criada com sucesso!" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Confirme seu e-mail" })).toBeVisible();
+  await expect(page.getByText("Se esta conta precisar de confirmação, enviaremos um link para novo@finansys.com.br. Confira sua caixa de entrada e o spam.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reenviar e-mail de confirmação" })).toBeVisible();
+  await page.getByRole("button", { name: "Reenviar e-mail de confirmação" }).click();
+  expect(resendPayload).toEqual({ email: "novo@finansys.com.br" });
+  await expect(page.getByRole("status")).toContainText("Se este e-mail estiver aguardando confirmação, enviaremos um novo link.");
+  await page.getByRole("button", { name: "Reenviar e-mail de confirmação" }).click();
+  await expect(page.getByRole("status")).toContainText("Aguarde alguns minutos antes de solicitar outro e-mail.");
   await expect(page.getByRole("link", { name: "Ir para o login agora" })).toHaveAttribute("href", "/login");
 });

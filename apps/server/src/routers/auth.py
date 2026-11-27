@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from src.core.database import get_db_session
 from src.schemas.auth import (
     AuthenticatedUser,
+    ConfirmationEmailRequest,
     LoginResponse,
     PasswordRecoveryCompleteRequest,
     PasswordRecoveryRequest,
@@ -16,6 +17,7 @@ from src.services.auth.auth_controller import (
     process_password_recovery_complete,
     process_password_recovery_request,
     process_register,
+    process_resend_confirmation,
     process_refresh,
     process_user_lookup,
 )
@@ -25,6 +27,20 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(request: Request, db: Annotated[Session, Depends(get_db_session)]) -> dict[str, str]:
     return await process_register(request, db)
+
+
+@router.post("/resend-confirmation", status_code=status.HTTP_202_ACCEPTED)
+async def resend_confirmation(request: Request) -> dict[str, str]:
+    from pydantic import ValidationError
+
+    try:
+        payload = ConfirmationEmailRequest.model_validate(await request.json())
+    except (ValidationError, ValueError, TypeError):
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "invalid_request", "message": "Informe um endereço de e-mail válido."},
+        ) from None
+    return process_resend_confirmation(request, payload)
 
 
 @router.post("/password-recovery", status_code=status.HTTP_202_ACCEPTED)
