@@ -9,6 +9,9 @@ from src.schemas.auth import AuthenticatedUser
 from src.schemas.goals_schemas import (
     GoalCreate,
     GoalFilters,
+    GoalHistoryFilters,
+    GoalHistoryResponse,
+    GoalHistoryUpdate,
     GoalProgressResponse,
     GoalResponse,
     GoalUpdate,
@@ -98,3 +101,29 @@ def _failure_response(failure: GoalFailure) -> JSONResponse:
         status_code=failure.status_code,
         content={"detail": {"code": failure.code, "message": failure.message}},
     )
+
+@router.get("/{goal_id}/history", response_model=list[GoalHistoryResponse])
+def list_goal_history(
+    goal_id: int,
+    filters: Annotated[GoalHistoryFilters, Query()],
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db_session)],
+) -> list[GoalHistoryResponse] | Response:
+    try:
+        return GoalService(db).list_history(user.id, goal_id, filters)
+    except GoalFailure as failure:
+        return _failure_response(failure)
+
+
+@router.patch("/{goal_id}/history/{history_id}", response_model=GoalHistoryResponse)
+def edit_goal_history_entry(
+    goal_id: int,
+    history_id: int,
+    payload: GoalHistoryUpdate,
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db_session)],
+) -> GoalHistoryResponse | Response:
+    try:
+        return GoalService(db).edit_history_entry(user.id, goal_id, history_id, payload)
+    except GoalFailure as failure:
+        return _failure_response(failure)
