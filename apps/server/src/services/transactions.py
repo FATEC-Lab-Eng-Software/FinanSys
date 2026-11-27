@@ -11,6 +11,7 @@ from src.schemas.transactions_schemas import (
     TransactionResponse,
     TransactionUpdate,
 )
+from src.services.notifications_service import NotificationService
 
 class TransactionFailure(Exception):
     def __init__(self, status_code: int, code: str, message: str) -> None:
@@ -26,6 +27,14 @@ class TransactionService:
 
     def create(self, user_id: str, payload: TransactionCreate) -> TransactionResponse:
         try:
+            transaction_type = "Entrada" if payload.type == "inflow" else "Saída"
+            amount = f"{payload.value:,.2f}".translate(str.maketrans({",": ".", ".": ","}))
+            NotificationService(self._session).stage(
+                user_id,
+                category="transaction",
+                title=f"{transaction_type} registrada",
+                description=f"{payload.source_money}: R$ {amount}.",
+            )
             transaction = self._transactions.create(
                 user_id=UUID(user_id),
                 values=payload.model_dump(),

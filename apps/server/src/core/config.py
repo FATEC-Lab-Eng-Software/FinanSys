@@ -33,6 +33,9 @@ class Settings:
             or ""
         ).strip()
         self.supabase_service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        self.hermes_api_base_url = os.getenv("HERMES_API_BASE_URL", "").strip().rstrip("/")
+        self.hermes_api_server_key = os.getenv("HERMES_API_SERVER_KEY", "").strip()
+        self.google_books_api_key = os.getenv("GOOGLE_BOOKS_API_KEY", "").strip()
         self.cors_allowed_origins = self._origin_list(
             "CORS_ALLOWED_ORIGINS",
             "http://localhost:3000,http://127.0.0.1:3000",

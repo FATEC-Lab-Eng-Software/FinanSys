@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
+from sqlalchemy.dialects.postgresql import dialect
 
 from src.repositories.auth.user_repository import UserRepository
 
@@ -21,7 +22,7 @@ class FakeSession:
         self.parameters = None
         self.commit_count = 0
 
-    def execute(self, statement, parameters):
+    def execute(self, statement, parameters=None):
         self.statement = statement
         self.parameters = parameters
         return FakeResult(self.row)
@@ -52,3 +53,22 @@ def test_failed_attempt_upserts_counter_even_before_user_is_synced(row, expected
     assert isinstance(session.parameters["id"], UUID)
     assert session.commit_count == 1
     assert lockout_until == expected_lockout
+
+
+@pytest.mark.parametrize("is_active", [True, False, None])
+def test_sync_auth_user_updates_activation_only_when_seed_provides_it(is_active):
+    session = FakeSession(None)
+    repository = UserRepository(session)
+
+    repository.sync_auth_user(
+        user_id=uuid4(),
+        email="cliente@finansys.test",
+        first_name="Cliente",
+        last_name="Demonstração",
+        created_at=None,
+        last_access_at=None,
+        is_active=is_active,
+    )
+
+    statement = str(session.statement.compile(dialect=dialect()))
+    assert ("is_active = excluded.is_active" in statement) is (is_active is not None)
